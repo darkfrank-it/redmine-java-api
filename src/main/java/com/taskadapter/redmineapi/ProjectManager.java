@@ -1,14 +1,8 @@
 package com.taskadapter.redmineapi;
 
-import com.taskadapter.redmineapi.bean.Membership;
-import com.taskadapter.redmineapi.bean.News;
-import com.taskadapter.redmineapi.bean.Project;
-import com.taskadapter.redmineapi.bean.Role;
-import com.taskadapter.redmineapi.bean.Version;
+import com.taskadapter.redmineapi.bean.*;
 import com.taskadapter.redmineapi.internal.RequestParam;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.apache.http.NameValuePair;
-import org.apache.http.message.BasicNameValuePair;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -159,7 +153,7 @@ public class ProjectManager {
      */
     public List<News> getNews(String projectKey) throws RedmineException {
         Set<RequestParam> params = new HashSet<>();
-        if ((projectKey != null) && (projectKey.length() > 0)) {
+        if ((projectKey != null) && (!projectKey.isEmpty())) {
             params.add(new RequestParam("project_id", projectKey));
         }
         return transport.getObjectsList(News.class, params);

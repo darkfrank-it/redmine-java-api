@@ -3,9 +3,9 @@ package com.taskadapter.redmineapi;
 import com.taskadapter.redmineapi.bean.Attachment;
 import com.taskadapter.redmineapi.bean.WikiPage;
 import com.taskadapter.redmineapi.bean.WikiPageDetail;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
@@ -15,13 +15,13 @@ public class WikiManagerTest {
 
     private WikiManager manager;
 
-    @Before
+    @BeforeEach
     public void beforeEachTest() {
         RedmineManager redmineManager = IntegrationTestHelper.createRedmineManager();
         manager = redmineManager.getWikiManager();
     }
 
-    @Ignore("requires manual configuration, see the source code.")
+    @Disabled("requires manual configuration, see the source code.")
     @Test
     public void getWikiPagesIndexByProject() throws Exception {
         // I created this project and some wiki pages manually because
@@ -31,7 +31,7 @@ public class WikiManagerTest {
         assertThat(wikiPages.size()).isEqualTo(2);
     }
 
-    @Ignore("requires manual configuration, see the source code.")
+    @Disabled("requires manual configuration, see the source code.")
     @Test
     public void getSpecificWikiPageByProject() throws Exception {
         WikiPageDetail specificPage = manager.getWikiPageDetailByProjectAndTitle("projkey1410979585758", "Another");

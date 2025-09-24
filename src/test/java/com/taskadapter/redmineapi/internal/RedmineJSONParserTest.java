@@ -15,9 +15,9 @@ import com.taskadapter.redmineapi.bean.User;
 import com.taskadapter.redmineapi.internal.json.JsonInput;
 import com.taskadapter.redmineapi.internal.json.JsonObjectParser;
 import org.json.JSONException;
-import org.junit.Assert;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -28,10 +28,8 @@ import java.util.Collection;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 /**
  * Redmine JSON parser tests.
@@ -60,7 +58,7 @@ public class RedmineJSONParserTest {
 				new Tracker().setId(2).setName("Feature"),
 				new Tracker().setId(3).setName("Support")));
 		template.setDescription("");
-		Assert.assertEquals(template, project);
+		assertEquals(template, project);
 	}
 
 	@Test
@@ -75,7 +73,7 @@ public class RedmineJSONParserTest {
 			List<Issue> issues = JsonInput.getListOrEmpty(
 					RedmineJSONParser.getResponse(str), "issues",
 					RedmineJSONParser::parseIssue);
-			Assert.assertTrue(issues.isEmpty());
+			assertTrue(issues.isEmpty());
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Error:" + e);
@@ -86,7 +84,7 @@ public class RedmineJSONParserTest {
 	public void testCountIssues() {
 		try {
 			List<Issue> issues = loadRedmine11Issues();
-			Assert.assertEquals(26, issues.size());
+			assertEquals(26, issues.size());
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
@@ -100,7 +98,7 @@ public class RedmineJSONParserTest {
 	}
 
 	/* Gson parser is bad at detecting errors :( */
-	@Ignore
+    @Disabled
 	@Test
 	public void testMailformedProject() throws IOException, JSONException {
 		/* Check parser correctness */
@@ -110,7 +108,7 @@ public class RedmineJSONParserTest {
 			RedmineJSONParser.parseProject(RedmineJSONParser
 					.getResponseSingleObject(json, "project"));
 		} catch (JSONException e) {
-			Assert.assertNotSame("Empty input", e.getMessage());
+			assertNotSame("Empty input", e.getMessage());
 		}
 	}
 
@@ -122,19 +120,18 @@ public class RedmineJSONParserTest {
 		Integer expectedProjectID = 23;
 		String expectedName = "test project";
 		String expectedKey = "test1295649781087";
-		Assert.assertEquals(expectedProjectID, project.getId());
-		Assert.assertEquals(expectedName, project.getName());
-		Assert.assertEquals(expectedKey, project.getIdentifier());
+		assertEquals(expectedProjectID, project.getId());
+		assertEquals(expectedName, project.getName());
+		assertEquals(expectedKey, project.getIdentifier());
 
 		Collection<Tracker> trackers = project.getTrackers();
-		Assert.assertNotNull("Trackers list must not be NULL", trackers);
-		Assert.assertEquals(3, trackers.size());
+		assertNotNull(trackers, "Trackers list must not be NULL");
+		assertEquals(3, trackers.size());
 
 		Tracker tracker = project.getTrackerByName("Support");
-		Assert.assertNotNull("Tracker must be not null", tracker);
+		assertNotNull(tracker, "Tracker must be not null");
 		Integer expectedTrackerId = 3;
-		Assert.assertEquals("checking id of 'support' tracker",
-				expectedTrackerId, tracker.getId());
+		assertEquals(expectedTrackerId, tracker.getId(), "checking id of 'support' tracker");
 	}
 
     @Test
@@ -143,10 +140,10 @@ public class RedmineJSONParserTest {
         Project project = RedmineJSONParser.parseProject(RedmineJSONParser
                 .getResponseSingleObject(json, "project"));
 
-        Assert.assertEquals(project.getCustomFields().size(), 2);
+        assertEquals(2, project.getCustomFields().size());
         String expectedCustomeFieldValue = "Should have a value";
-        Assert.assertEquals(expectedCustomeFieldValue, project.getCustomFieldById(1).getValue());
-        Assert.assertEquals("", project.getCustomFieldById(6).getValue());
+        assertEquals(expectedCustomeFieldValue, project.getCustomFieldById(1).getValue());
+        assertEquals("", project.getCustomFieldById(6).getValue());
     }
 
 	@Test
@@ -165,11 +162,11 @@ public class RedmineJSONParserTest {
 			List<Issue> issues = loadRedmine11Issues();
 			Integer issueID = 52;
 			Issue issue52 = RedmineTestUtils.findIssueInList(issues, issueID);
-			Assert.assertNotNull(issue52);
+			assertNotNull(issue52);
 
 			// must be NULL and not "0"
-			assertNull("estimated time must be null",
-                    issue52.getEstimatedHours());
+			assertNull(
+                    issue52.getEstimatedHours(), "estimated time must be null");
 		} catch (IOException e) {
 			fail(e.getMessage());
 		}
@@ -186,7 +183,7 @@ public class RedmineJSONParserTest {
 				RedmineJSONParser.getResponse(json), "issues",
 				RedmineJSONParser::parseIssue);
 		// must be 2 issues in the file
-		Assert.assertTrue(issues.size() == 2);
+        assertEquals(2, issues.size());
 		assertNotNull(RedmineTestUtils.findIssueInList(issues,
 				nonLatinRussianSymbols));
 		assertNotNull(RedmineTestUtils.findIssueInList(issues,
@@ -211,9 +208,9 @@ public class RedmineJSONParserTest {
 		try {
 			List<Issue> issues = loadRedmine11Issues();
 			Issue issue65 = RedmineTestUtils.findIssueInList(issues, 65);
-			Assert.assertTrue(issue65.getDescription().startsWith(
+			assertTrue(issue65.getDescription().startsWith(
 					"This is the description for the new task."));
-			Assert.assertTrue(issue65.getDescription().endsWith(
+			assertTrue(issue65.getDescription().endsWith(
 					"This is the last line."));
 		} catch (Exception e) {
 			fail(e.getMessage());
@@ -232,7 +229,7 @@ public class RedmineJSONParserTest {
 				found = true;
 			}
 		}
-		Assert.assertTrue("Admin user must be among all the users", found);
+		assertTrue(found, "Admin user must be among all the users");
 	}
 
 	@Test
@@ -240,11 +237,11 @@ public class RedmineJSONParserTest {
 		List<Issue> objects = loadRedmine11Issues();
 		Integer issueId = 68;
 		Issue issue68 = RedmineTestUtils.findIssueInList(objects, issueId);
-		Assert.assertNotNull(issue68);
-		Assert.assertEquals(issueId, issue68.getId());
+		assertNotNull(issue68);
+		assertEquals(issueId, issue68.getId());
 		Integer statusId = 1;
-		Assert.assertEquals(statusId, issue68.getStatusId());
-		Assert.assertEquals("New", issue68.getStatusName());
+		assertEquals(statusId, issue68.getStatusId());
+		assertEquals("New", issue68.getStatusName());
 
 		assertThat(issue68.getAuthorId()).isEqualTo(1);
 	}
@@ -257,7 +254,7 @@ public class RedmineJSONParserTest {
 				RedmineJSONParser::parseTimeEntry);
 		Integer objId = 2;
 		TimeEntry obj2 = RedmineTestUtils.findTimeEntry(objects, objId);
-		Assert.assertNotNull(obj2);
+		assertNotNull(obj2);
 
 		Integer expectedIssueId = 44;
 		String expectedProjectName = "Permanent test project for Task Adapter";
@@ -268,16 +265,16 @@ public class RedmineJSONParserTest {
 		Integer expectedActivityId = 8;
 		Float expectedHours = 2f;
 
-		Assert.assertEquals(objId, obj2.getId());
-		Assert.assertEquals(expectedIssueId, obj2.getIssueId());
-		Assert.assertEquals(expectedProjectName, obj2.getProjectName());
-		Assert.assertEquals(expectedProjectId, obj2.getProjectId());
-		Assert.assertEquals(expectedUserName, obj2.getUserName());
-		Assert.assertEquals(expectedUserId, obj2.getUserId());
-		Assert.assertEquals(expectedActivityName, obj2.getActivityName());
-		Assert.assertEquals(expectedActivityId, obj2.getActivityId());
-		Assert.assertEquals(expectedHours, obj2.getHours());
-		Assert.assertEquals("spent 2 hours working on ABC", obj2.getComment());
+		assertEquals(objId, obj2.getId());
+		assertEquals(expectedIssueId, obj2.getIssueId());
+		assertEquals(expectedProjectName, obj2.getProjectName());
+		assertEquals(expectedProjectId, obj2.getProjectId());
+		assertEquals(expectedUserName, obj2.getUserName());
+		assertEquals(expectedUserId, obj2.getUserId());
+		assertEquals(expectedActivityName, obj2.getActivityName());
+		assertEquals(expectedActivityId, obj2.getActivityId());
+		assertEquals(expectedHours, obj2.getHours());
+		assertEquals("spent 2 hours working on ABC", obj2.getComment());
 
 		DateComparator.testLongDate(2011, Calendar.JANUARY, 31, 11, 10, 40,
 				"GMT-8", obj2.getCreatedOn());
@@ -295,7 +292,7 @@ public class RedmineJSONParserTest {
 				.getResourceAsString("issue/issue_with_multiline_description.json");
 		final Issue issue = RedmineJSONParser.parseIssue(RedmineJSONParser
 				.getResponseSingleObject(json, "issue"));
-		Assert.assertEquals(
+		assertEquals(
 				"This is a description \nwith more than \n\n\none line.",
 				issue.getDescription());
 	}
@@ -350,10 +347,10 @@ public class RedmineJSONParserTest {
 					RedmineJSONParser::parseStatus);
 			assertEquals(6, statuses.size());
 			IssueStatus status5 = statuses.get(4);
-			assertEquals(new Integer(5), status5.getId());
+			assertEquals(Integer.valueOf(5), status5.getId());
 			assertEquals("Closed", status5.getName());
-			assertEquals(false, status5.isDefaultStatus());
-			assertEquals(true, status5.isClosed());
+            assertFalse(status5.isDefaultStatus());
+            assertTrue(status5.isClosed());
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Error:" + e);
@@ -370,7 +367,7 @@ public class RedmineJSONParserTest {
 			List<News> news = JsonInput.getListOrEmpty(
 					RedmineJSONParser.getResponse(str), "news",
 					RedmineJSONParser::parseNews);
-			Assert.assertTrue(news.isEmpty());
+			assertTrue(news.isEmpty());
 		} catch (Exception e) {
 			fail("Error:" + e);
 		}
@@ -422,11 +419,11 @@ public class RedmineJSONParserTest {
 			.parseProject(RedmineJSONParser.getResponseSingleObject(json,
 				"version"));
 	
-		Assert.assertEquals(version.getCustomFields().size(), 2);
+		assertEquals(2, version.getCustomFields().size());
 		String expectedCustomeFieldValue = "Should have a value";
-		Assert.assertEquals(expectedCustomeFieldValue, version
+		assertEquals(expectedCustomeFieldValue, version
 			.getCustomFieldById(1).getValue());
-		Assert.assertEquals("", version.getCustomFieldById(6).getValue());
+		assertEquals("", version.getCustomFieldById(6).getValue());
     }
     
     @Test

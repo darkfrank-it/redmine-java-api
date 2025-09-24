@@ -1,8 +1,9 @@
 package com.taskadapter.redmineapi.internal;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
+import java.util.Calendar;
 import java.util.Date;
 
 import static com.taskadapter.redmineapi.internal.RedmineDateParser.parse;
@@ -14,12 +15,12 @@ public class RedmineDateParserTest {
     @Test
     public void allRedmineDateFormatsAreParsed() throws ParseException {
         // Redmine 1.x short format
-        dateIsParsedTo("2015/03/11", new Date(115, 02, 11));
+        dateIsParsedTo("2015/03/11", new Date(115, Calendar.MARCH, 11));
         // Redmine 1.x long format
         dateIsParsedTo("2015/03/11 17:22:37 -0700", "2015-03-11T17:22:37.000PDT");
 
         // Redmine 2.x short format
-        dateIsParsedTo("2015-03-11", new Date(115, 02, 11));
+        dateIsParsedTo("2015-03-11", new Date(115, Calendar.MARCH, 11));
         // Redmine 2.x long format
         dateIsParsedTo("2015-03-12T00:22:37Z", "2015-03-11T17:22:37.000PDT");
 

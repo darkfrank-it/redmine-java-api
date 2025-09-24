@@ -5,20 +5,17 @@ import com.taskadapter.redmineapi.RedmineAuthenticationException;
 import com.taskadapter.redmineapi.RedmineException;
 import com.taskadapter.redmineapi.internal.RequestParam;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.apache.http.message.BasicNameValuePair;
 
+import java.io.Serial;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Redmine Project.
  */
 public class Project implements Identifiable, Serializable, FluentStyle {
-	private static final long serialVersionUID = 4529305420978716446L;
+	@Serial
+    private static final long serialVersionUID = 4529305420978716446L;
 
     private final PropertyStorage storage = new PropertyStorage();
 
@@ -121,7 +118,7 @@ public class Project implements Identifiable, Serializable, FluentStyle {
      */
     public Collection<Tracker> getTrackers() {
     	if (!storage.isPropertySet(TRACKERS)) //checks because trackers storage is not created for new projects
-    		return Collections.unmodifiableCollection(new HashSet<Tracker>());
+    		return Collections.unmodifiableCollection(new HashSet<>());
         return Collections.unmodifiableCollection(storage.get(TRACKERS));
     }
 
@@ -286,9 +283,7 @@ public class Project implements Identifiable, Serializable, FluentStyle {
 
         Project project = (Project) o;
 
-        if (getId() != null ? !getId().equals(project.getId()) : project.getId() != null) return false;
-
-        return true;
+        return getId() != null ? getId().equals(project.getId()) : project.getId() == null;
     }
 
     @Override

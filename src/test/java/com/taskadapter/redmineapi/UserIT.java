@@ -4,21 +4,16 @@ import com.taskadapter.redmineapi.bean.Group;
 import com.taskadapter.redmineapi.bean.Role;
 import com.taskadapter.redmineapi.bean.User;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.apache.http.client.HttpClient;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class UserIT {
     private static User OUR_USER;
@@ -31,7 +26,7 @@ public class UserIT {
     private static String nonAdminPassword;
     private static Transport transport;
 
-    @BeforeClass
+    @BeforeAll
     public static void oneTimeSetup() {
         RedmineManager mgr = IntegrationTestHelper.createRedmineManager();
         transport = mgr.getTransport();
@@ -49,7 +44,7 @@ public class UserIT {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void afterClass() {
         try {
             nonAdminUser.delete();
@@ -64,10 +59,10 @@ public class UserIT {
         assertThat(users).isNotEmpty();
     }
 
-    @Test(expected = NotAuthorizedException.class)
+    @Test
     public void usersCannotBeLoadedByNotAdmin() throws RedmineException {
-        getNonAdminManager().getUserManager().getUsers();
-        fail("Must have failed with NotAuthorizedException.");
+        assertThrows(NotAuthorizedException.class, () -> getNonAdminManager().getUserManager().getUsers());
+        // fail("Must have failed with NotAuthorizedException.");
     }
 
     @Test
@@ -111,9 +106,9 @@ public class UserIT {
         }
     }
 
-    @Test(expected = NotFoundException.class)
-    public void testGetUserNonExistingId() throws RedmineException {
-        userManager.getUserById(999999);
+    @Test
+    public void testGetUserNonExistingId() {
+        assertThrows(NotFoundException.class, () -> userManager.getUserById(999999));
     }
 
     @Test
@@ -199,9 +194,11 @@ public class UserIT {
         }
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void deletingNonExistingUserThrowsNFE() throws RedmineException {
-        new User(transport).setId(999999).delete();
+        assertThrows(NotFoundException.class, () -> {
+            new User(transport).setId(999999).delete();
+        });
     }
 
     /**
@@ -294,15 +291,15 @@ public class UserIT {
                 .create();
 
         try {
-            Assert.assertNotNull(user.getId());
-            Assert.assertEquals(login, user.getLogin());
-            Assert.assertNull(user.getPassword());
-            Assert.assertEquals("first name", user.getFirstName());
-            Assert.assertEquals("last name", user.getLastName());
-            Assert.assertEquals(email, user.getMail());
-            Assert.assertNotNull(user.getCreatedOn());
-            Assert.assertNull(user.getLastLoginOn());
-            Assert.assertNotNull(user.getCustomFields());
+            assertNotNull(user.getId());
+            assertEquals(login, user.getLogin());
+            assertNull(user.getPassword());
+            assertEquals("first name", user.getFirstName());
+            assertEquals("last name", user.getLastName());
+            assertEquals(email, user.getMail());
+            assertNotNull(user.getCreatedOn());
+            assertNull(user.getLastLoginOn());
+            assertNotNull(user.getCustomFields());
         } finally {
             user.delete();
         }
@@ -315,13 +312,13 @@ public class UserIT {
         user.update();
 
         User loadedById = userManager.getUserById(nonAdminUserId);
-        Assert.assertEquals(User.STATUS_LOCKED, loadedById.getStatus());
+        assertEquals(User.STATUS_LOCKED, loadedById.getStatus());
 
         loadedById.setStatus(User.STATUS_ACTIVE)
                 .update();
 
         User loadedAgain = userManager.getUserById(nonAdminUserId);
-        Assert.assertEquals(User.STATUS_ACTIVE, loadedAgain.getStatus());
+        assertEquals(User.STATUS_ACTIVE, loadedAgain.getStatus());
     }
 
     private RedmineManager getNonAdminManager() {

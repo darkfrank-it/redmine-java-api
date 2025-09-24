@@ -6,16 +6,16 @@ import com.taskadapter.redmineapi.bean.IssueRelation;
 import com.taskadapter.redmineapi.bean.Project;
 import com.taskadapter.redmineapi.bean.Version;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Calendar;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests default redmine manager values in a response. Tries to provides
@@ -31,7 +31,7 @@ public class RedmineManagerDefaultsIT {
     private static ProjectManager projectManager;
 	private static Transport transport;
 
-	@BeforeClass
+	@BeforeAll
 	public static void oneTimeSetUp() {
         TestConfig testConfig = new TestConfig();
 		logger.info("Running redmine tests using: " + testConfig.getURI());
@@ -49,11 +49,11 @@ public class RedmineManagerDefaultsIT {
 			projectId = createdProject.getId();
 		} catch (Exception e) {
 			logger.error("Exception while creating test project", e);
-			Assert.fail("can't create a test project. " + e.getMessage());
+			fail("can't create a test project. " + e.getMessage());
 		}
 	}
 
-	@AfterClass
+	@AfterAll
 	public static void oneTimeTearDown() {
 		try {
 			if (projectManager != null && projectKey != null) {
@@ -61,7 +61,7 @@ public class RedmineManagerDefaultsIT {
 			}
 		} catch (Exception e) {
 			logger.error("Exception while deleting test project", e);
-			Assert.fail("can't delete the test project '" + projectKey
+			fail("can't delete the test project '" + projectKey
 					+ ". reason: " + e.getMessage());
 		}
 	}
@@ -71,16 +71,16 @@ public class RedmineManagerDefaultsIT {
 		Project template = new Project(transport, "Test name", "key" + Calendar.getInstance().getTimeInMillis());
 		Project result = template.create();
 		try {
-			Assert.assertNotNull(result.getId());
-			Assert.assertEquals(template.getIdentifier(),
+			assertNotNull(result.getId());
+			assertEquals(template.getIdentifier(),
 					result.getIdentifier());
-			Assert.assertEquals("Test name", result.getName());
-			Assert.assertEquals("", result.getDescription());
-			Assert.assertEquals("", result.getHomepage());
-			Assert.assertNotNull(result.getCreatedOn());
-			Assert.assertNotNull(result.getUpdatedOn());
-			Assert.assertNotNull(result.getTrackers());
-			Assert.assertNull(result.getParentId());
+			assertEquals("Test name", result.getName());
+			assertEquals("", result.getDescription());
+			assertEquals("", result.getHomepage());
+			assertNotNull(result.getCreatedOn());
+			assertNotNull(result.getUpdatedOn());
+			assertNotNull(result.getTrackers());
+			assertNull(result.getParentId());
 		} finally {
             projectManager.deleteProject(result.getIdentifier());
 		}
@@ -93,10 +93,10 @@ public class RedmineManagerDefaultsIT {
 				.create();
 		
 		try {
-			Assert.assertNotNull(result.getId());
-			Assert.assertEquals("This is a subject", result.getSubject());
-			Assert.assertNull(result.getParentId());
-			Assert.assertNull(result.getEstimatedHours());
+			assertNotNull(result.getId());
+			assertEquals("This is a subject", result.getSubject());
+			assertNull(result.getParentId());
+			assertNull(result.getEstimatedHours());
 			/* result.getSpentHours() is NULL for Redmine 3.0.0 and is equal to "0.0" for Redmine 2.6.2
 			* so we can't really check this because we don't know the Redmine version.
 			* Ideally we would want something like
@@ -106,28 +106,28 @@ public class RedmineManagerDefaultsIT {
 			*     assertThat()...
 			* }
 			*/
-			Assert.assertNull(result.getAssigneeId());
-			Assert.assertNotNull(result.getPriorityText());
-			Assert.assertNotNull(result.getPriorityId());
-			Assert.assertEquals(Integer.valueOf(0), result.getDoneRatio());
-			Assert.assertNotNull(result.getProjectId());
-			Assert.assertNotNull(result.getAuthorId());
-			Assert.assertNotNull(result.getAuthorName());
-			Assert.assertNull(result.getStartDate());
-			Assert.assertNull(result.getDueDate());
-			Assert.assertNotNull(result.getTracker());
+			assertNull(result.getAssigneeId());
+			assertNotNull(result.getPriorityText());
+			assertNotNull(result.getPriorityId());
+			assertEquals(Integer.valueOf(0), result.getDoneRatio());
+			assertNotNull(result.getProjectId());
+			assertNotNull(result.getAuthorId());
+			assertNotNull(result.getAuthorName());
+			assertNull(result.getStartDate());
+			assertNull(result.getDueDate());
+			assertNotNull(result.getTracker());
 			assertThat(result.getDescription()).isNull();
-			Assert.assertNotNull(result.getCreatedOn());
-			Assert.assertNotNull(result.getUpdatedOn());
-			Assert.assertNotNull(result.getStatusId());
-			Assert.assertNotNull(result.getStatusName());
-			Assert.assertNull(result.getTargetVersion());
-			Assert.assertNull(result.getCategory());
-			Assert.assertNull(result.getNotes());
-			Assert.assertNotNull(result.getCustomFields());
-			Assert.assertNotNull(result.getJournals());
-			Assert.assertNotNull(result.getRelations());
-			Assert.assertNotNull(result.getAttachments());
+			assertNotNull(result.getCreatedOn());
+			assertNotNull(result.getUpdatedOn());
+			assertNotNull(result.getStatusId());
+			assertNotNull(result.getStatusName());
+			assertNull(result.getTargetVersion());
+			assertNull(result.getCategory());
+			assertNull(result.getNotes());
+			assertNotNull(result.getCustomFields());
+			assertNotNull(result.getJournals());
+			assertNotNull(result.getRelations());
+			assertNotNull(result.getAttachments());
 		} finally {
             result.delete();
 		}
@@ -138,7 +138,7 @@ public class RedmineManagerDefaultsIT {
 		Issue issue = new Issue(transport, projectId).setSubject("Issue with no start date set in code")
 				.create();
 		try {
-			Assert.assertNotNull(issue.getStartDate());
+			assertNotNull(issue.getStartDate());
 		} finally {
 			issue.delete();
 		}
@@ -150,7 +150,7 @@ public class RedmineManagerDefaultsIT {
 				.setStartDate(null)
 				.create();
 		try {
-			Assert.assertNull(issue.getStartDate());
+			assertNull(issue.getStartDate());
 		} finally {
 			issue.delete();
 		}
@@ -167,11 +167,11 @@ public class RedmineManagerDefaultsIT {
 			try {
 				IssueRelation relation = new IssueRelation(transport, issue1.getId(), issue2.getId(), "blocks")
 						.create();
-				Assert.assertNotNull(relation.getId());
-				Assert.assertEquals(issue1.getId(), relation.getIssueId());
-				Assert.assertEquals(issue2.getId(), relation.getIssueToId());
-				Assert.assertEquals("blocks", relation.getType());
-				Assert.assertEquals(Integer.valueOf(0), relation.getDelay());
+				assertNotNull(relation.getId());
+				assertEquals(issue1.getId(), relation.getIssueId());
+				assertEquals(issue2.getId(), relation.getIssueToId());
+				assertEquals("blocks", relation.getType());
+				assertEquals(Integer.valueOf(0), relation.getDelay());
 			} finally {
 				issue2.delete();
 			}
@@ -184,14 +184,14 @@ public class RedmineManagerDefaultsIT {
 	public void testVersionDefaults() throws RedmineException {
 		Version version = new Version(transport, projectId, "2.3.4.5").create();
 		try {
-			Assert.assertNotNull(version.getId());
-			Assert.assertNotNull(version.getProjectId());
-			Assert.assertEquals("2.3.4.5", version.getName());
-			Assert.assertEquals("", version.getDescription());
-			Assert.assertNotNull(version.getStatus());
-			Assert.assertNull(version.getDueDate());
-			Assert.assertNotNull(version.getCreatedOn());
-			Assert.assertNotNull(version.getUpdatedOn());
+			assertNotNull(version.getId());
+			assertNotNull(version.getProjectId());
+			assertEquals("2.3.4.5", version.getName());
+			assertEquals("", version.getDescription());
+			assertNotNull(version.getStatus());
+			assertNull(version.getDueDate());
+			assertNotNull(version.getCreatedOn());
+			assertNotNull(version.getUpdatedOn());
 		} finally {
 			version.delete();
 		}
@@ -203,10 +203,10 @@ public class RedmineManagerDefaultsIT {
 		IssueCategory category = new IssueCategory(transport, projectByKey.getId(), "test name")
 				.create();
 		try {
-			Assert.assertNotNull(category.getId());
-			Assert.assertEquals("test name", category.getName());
-			Assert.assertNotNull(category.getProjectId());
-			Assert.assertNull(category.getAssigneeId());
+			assertNotNull(category.getId());
+			assertEquals("test name", category.getName());
+			assertNotNull(category.getProjectId());
+			assertNull(category.getAssigneeId());
 		} finally {
 			category.delete();
 		}

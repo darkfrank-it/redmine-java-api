@@ -2,8 +2,9 @@ package com.taskadapter.redmineapi;
 
 import com.taskadapter.redmineapi.bean.Project;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -12,7 +13,7 @@ public class ParentProjectIT {
     private static ProjectManager projectManager;
     private static Transport transport;
 
-    @BeforeClass
+    @BeforeAll
     public static void oneTimeSetUp() {
         RedmineManager redmineManager = IntegrationTestHelper.createRedmineManager();
         projectManager = redmineManager.getProjectManager();

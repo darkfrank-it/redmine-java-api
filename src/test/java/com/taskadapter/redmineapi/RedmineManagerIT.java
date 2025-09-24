@@ -1,6 +1,7 @@
 package com.taskadapter.redmineapi;
 
-import org.junit.Test;
+
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -13,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RedmineManagerIT {
 
     @Test
-    public void unknownHostGivesException() throws RedmineException, IOException {
+    public void unknownHostGivesException() throws RedmineException {
         final RedmineManager mgr1 = RedmineManagerFactory.createUnauthenticated("http://someunknownhost.com");
         try {
             mgr1.getProjectManager().getProjects();

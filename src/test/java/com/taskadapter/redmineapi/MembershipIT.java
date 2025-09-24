@@ -6,9 +6,9 @@ import com.taskadapter.redmineapi.bean.Project;
 import com.taskadapter.redmineapi.bean.Role;
 import com.taskadapter.redmineapi.bean.User;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -25,7 +25,7 @@ public class MembershipIT {
     private static ProjectManager projectManager;
     private static Transport transport;
 
-    @BeforeClass
+    @BeforeAll
     public static void oneTimeSetup() {
         mgr = IntegrationTestHelper.createRedmineManager();
         transport = mgr.getTransport();
@@ -38,7 +38,7 @@ public class MembershipIT {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void oneTimeTearDown() {
         try {
             project.delete();
@@ -68,7 +68,7 @@ public class MembershipIT {
     @Test
     public void membershipCanBeSetForGroups() throws RedmineException {
         final List<Role> roles = userManager.getRoles();
-        final Collection<Role> rolesToSet = Arrays.asList(roles.get(0));
+        final Collection<Role> rolesToSet = Collections.singletonList(roles.get(0));
         final Group group = new Group(transport).setName("group" + new Random().nextDouble());
         Group createdGroup = null;
         try {

@@ -6,36 +6,27 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 
-import org.apache.http.HttpResponse;
-
 import com.taskadapter.redmineapi.RedmineException;
 import com.taskadapter.redmineapi.RedmineTransportException;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 
 /**
  * Communicator utilities.
  */
 public final class Communicators {
-	private static final ContentHandler<Object, Object> IDENTITY_HANDLER = new ContentHandler<Object, Object>() {
-		@Override
-		public Object processContent(Object content) throws RedmineException {
-			return content;
-		}
-	};
+	private static final ContentHandler<Object, Object> IDENTITY_HANDLER = content -> content;
 
-	private static final ContentHandler<HttpResponse, BasicHttpResponse> TRANSPORT_DECODER = new TransportDecoder();
+	private static final ContentHandler<ClassicHttpResponse, BasicHttpResponse> TRANSPORT_DECODER = new TransportDecoder();
 
-	private static final ContentHandler<BasicHttpResponse, Reader> CHARACTER_DECODER = new ContentHandler<BasicHttpResponse, Reader>() {
-		@Override
-		public Reader processContent(BasicHttpResponse content) throws RedmineException {
-			final String charset = content.getCharset();
-			try {
-				return new InputStreamReader(content.getStream(), charset);
-			} catch (UnsupportedEncodingException e) {
-				throw new RedmineTransportException(
-						"Unsupported response charset " + charset, e);
-			}
-		}
-	};
+	private static final ContentHandler<BasicHttpResponse, Reader> CHARACTER_DECODER = content -> {
+        final String charset = content.getCharset();
+        try {
+            return new InputStreamReader(content.getStream(), charset);
+        } catch (UnsupportedEncodingException e) {
+            throw new RedmineTransportException(
+                    "Unsupported response charset " + charset, e);
+        }
+    };
 	
 	private static final ContentHandler<BasicHttpResponse, String> CHAR_CONTENT_READER = compose(
 			Communicators::readAll, CHARACTER_DECODER);
@@ -80,7 +71,7 @@ public final class Communicators {
 		return new FmapCommunicator<>(handler, comm);
 	}
 
-	public static ContentHandler<HttpResponse, BasicHttpResponse> transportDecoder() {
+	public static ContentHandler<ClassicHttpResponse, BasicHttpResponse> transportDecoder() {
 		return TRANSPORT_DECODER;
 	}
 }

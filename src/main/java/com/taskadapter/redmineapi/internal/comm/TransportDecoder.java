@@ -1,15 +1,15 @@
 package com.taskadapter.redmineapi.internal.comm;
 
+import com.taskadapter.redmineapi.RedmineException;
+import com.taskadapter.redmineapi.RedmineTransportException;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
-
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import com.taskadapter.redmineapi.RedmineException;
-import com.taskadapter.redmineapi.RedmineTransportException;
 
 /**
  * Transport encoding decoder.
@@ -18,23 +18,24 @@ import com.taskadapter.redmineapi.RedmineTransportException;
  * 
  */
 final class TransportDecoder implements
-		ContentHandler<HttpResponse, BasicHttpResponse> {
+		ContentHandler<ClassicHttpResponse, BasicHttpResponse> {
 
 	@Override
-	public BasicHttpResponse processContent(HttpResponse response)
+	public BasicHttpResponse processContent(ClassicHttpResponse response)
 			throws RedmineException {
 		final HttpEntity entity = response.getEntity();
 		if (entity == null) {
-			return new BasicHttpResponse(response.getStatusLine().getStatusCode(),
+			return new BasicHttpResponse(response.getCode(),
 					InputStream.nullInputStream(),
 					StandardCharsets.UTF_8.name());
 		}
-		final String charset = HttpUtil.getCharset(entity);
-		final String encoding = HttpUtil.getEntityEncoding(entity);
+		String charset = entity.getContentEncoding(); //HttpUtil.getCharset(entity);
+		if(charset == null) {charset = StandardCharsets.UTF_8.name();}
+        final String encoding = HttpUtil.getEntityEncoding(entity);
 		try {
 			final InputStream initialStream = entity.getContent();
-			return new BasicHttpResponse(response.getStatusLine()
-					.getStatusCode(), decodeStream(encoding, initialStream),
+			return new BasicHttpResponse(response
+					.getCode(), decodeStream(encoding, initialStream),
 					charset);
 		} catch (IOException e) {
 			throw new RedmineTransportException(e);

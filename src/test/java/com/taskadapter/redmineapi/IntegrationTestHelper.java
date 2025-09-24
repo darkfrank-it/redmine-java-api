@@ -3,8 +3,8 @@ package com.taskadapter.redmineapi;
 import com.taskadapter.redmineapi.bean.Project;
 import com.taskadapter.redmineapi.bean.User;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.apache.http.client.HttpClient;
-import org.apache.http.conn.ClientConnectionManager;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +27,7 @@ public class IntegrationTestHelper {
 
     public static User getOurUser(Transport transport) {
         TestConfig testConfig = getTestConfig();
-        Integer userId = Integer.parseInt(testConfig.getParam("createissue.userid"));
+        int userId = Integer.parseInt(testConfig.getParam("createissue.userid"));
         String login = testConfig.getLogin();
         String fName = testConfig.getParam("userFName");
         String lName = testConfig.getParam("userLName");
@@ -70,7 +70,7 @@ public class IntegrationTestHelper {
     public static void deleteProject(Transport transport, String projectKey) {
         try {
             if (transport != null && projectKey != null) {
-                new Project(transport).setIdentifier(projectKey).delete();;
+                new Project(transport).setIdentifier(projectKey).delete();
             }
         } catch (Exception e) {
             logger.error("Exception while deleting test project", e);
@@ -82,7 +82,7 @@ public class IntegrationTestHelper {
      * @return The client configured for our Dev Redmine server which has a self-signed SSL certificate.
      */
     public static HttpClient getHttpClientForTestServer() {
-        final ClientConnectionManager connectionManager;
+        final PoolingHttpClientConnectionManager connectionManager;
         try {
             connectionManager = createConnectionManagerWithOurDevKeystore();
         } catch (Exception e) {
@@ -91,17 +91,17 @@ public class IntegrationTestHelper {
         return RedmineManagerFactory.getNewHttpClient(getTestConfig().getURI(), connectionManager);
     }
 
-    private static ClientConnectionManager createConnectionManagerWithOurDevKeystore() throws KeyManagementException, KeyStoreException {
+    private static PoolingHttpClientConnectionManager createConnectionManagerWithOurDevKeystore() throws KeyManagementException, KeyStoreException {
         final Optional<KeyStore> builtInExtension = getExtensionKeystore();
         final Optional<KeyStore> builtInClient = getClientKeystore();
 
-        if (builtInExtension.isPresent() && ! builtInClient.isPresent()) {
+        if (builtInExtension.isPresent() && builtInClient.isEmpty()) {
             return RedmineManagerFactory.createConnectionManagerWithExtraTrust(
                     Collections.singletonList(builtInExtension.get()));
         }
 
-        if (builtInExtension.isPresent() && builtInClient.isPresent()) {
-            return RedmineManagerFactory.createConnectionManagerWithClientCertificate(builtInClient.get(), 
+        if (builtInExtension.isPresent()) {
+            return RedmineManagerFactory.createConnectionManagerWithClientCertificate(builtInClient.get(),
                     "123456", Collections.singletonList(builtInExtension.get()));
         }
 
@@ -114,12 +114,12 @@ public class IntegrationTestHelper {
      * Redmine dev server.
      */
     private static Optional<KeyStore> getExtensionKeystore() {
-        final InputStream extStore =
-                IntegrationTestHelper.class.getClassLoader().getResourceAsStream("ta-dev-cacerts");
-        if (extStore == null) {
-            return Optional.empty();
-        }
-        try {
+        try (final InputStream extStore =
+                     IntegrationTestHelper.class.getClassLoader().getResourceAsStream("ta-dev-cacerts")) {
+            if (extStore == null) {
+                return Optional.empty();
+            }
+
             final KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
             // "123456" is the password for this custom keystore
             ks.load(extStore, "123456".toCharArray());
@@ -127,12 +127,6 @@ public class IntegrationTestHelper {
         } catch (Exception e) {
             e.printStackTrace();
             return Optional.empty();
-        } finally {
-            try {
-                extStore.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 

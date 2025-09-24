@@ -1,7 +1,7 @@
 package com.taskadapter.redmineapi.internal;
 
-import org.apache.http.message.BasicNameValuePair;
-import org.junit.Test;
+import org.apache.hc.core5.http.message.BasicNameValuePair;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collection;

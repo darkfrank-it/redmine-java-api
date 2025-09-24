@@ -4,8 +4,8 @@ import com.taskadapter.redmineapi.bean.Project;
 import com.taskadapter.redmineapi.internal.RedmineJSONParser;
 import com.taskadapter.redmineapi.internal.json.JsonInput;
 import org.json.JSONObject;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
@@ -15,7 +15,7 @@ public class ProjectsTest {
 
     private List<Project> projectsList;
 
-    @Before
+    @BeforeEach
     // Is executed before each test method
     public void setup() throws Exception {
 		String text = MyIOUtils.getResourceAsString("project/redmine_projects.json");

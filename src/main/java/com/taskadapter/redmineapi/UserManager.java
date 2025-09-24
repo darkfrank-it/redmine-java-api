@@ -7,7 +7,6 @@ import com.taskadapter.redmineapi.internal.DirectObjectsSearcher;
 import com.taskadapter.redmineapi.internal.RequestParam;
 import com.taskadapter.redmineapi.internal.ResultsWrapper;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.apache.http.message.BasicNameValuePair;
 
 import java.util.List;
 import java.util.Map;
@@ -159,7 +158,6 @@ public class UserManager {
 
     /**
      * DEPRECATED. use group.create()
-     *
      * Creates a new group.
      * <p><strong>This operation requires "Redmine Administrator" permission.</strong>
      * @return created group.

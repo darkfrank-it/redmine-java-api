@@ -3,7 +3,7 @@ package com.taskadapter.redmineapi.internal.comm.redmine;
 import com.taskadapter.redmineapi.RedmineException;
 import com.taskadapter.redmineapi.internal.comm.Communicator;
 import com.taskadapter.redmineapi.internal.comm.ContentHandler;
-import org.apache.http.HttpRequest;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 
 public class RedmineApiKeyAuthenticator<K> implements Communicator<K> {
 
@@ -23,7 +23,7 @@ public class RedmineApiKeyAuthenticator<K> implements Communicator<K> {
     }
 
     @Override
-    public <R> R sendRequest(HttpRequest request, ContentHandler<K, R> handler)
+    public <R> R sendRequest(ClassicHttpRequest request, ContentHandler<K, R> handler)
             throws RedmineException {
         request.addHeader("X-Redmine-API-Key", apiKey);
         return peer.sendRequest(request, handler);

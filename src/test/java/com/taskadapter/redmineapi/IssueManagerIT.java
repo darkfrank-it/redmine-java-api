@@ -1,56 +1,23 @@
 package com.taskadapter.redmineapi;
 
-import com.taskadapter.redmineapi.bean.Changeset;
-import com.taskadapter.redmineapi.bean.CustomField;
-import com.taskadapter.redmineapi.bean.CustomFieldDefinition;
-import com.taskadapter.redmineapi.bean.Group;
-import com.taskadapter.redmineapi.bean.Issue;
-import com.taskadapter.redmineapi.bean.IssueCategory;
-import com.taskadapter.redmineapi.bean.IssueRelation;
-import com.taskadapter.redmineapi.bean.IssueStatus;
-import com.taskadapter.redmineapi.bean.Journal;
-import com.taskadapter.redmineapi.bean.JournalDetail;
-import com.taskadapter.redmineapi.bean.Membership;
-import com.taskadapter.redmineapi.bean.Project;
-import com.taskadapter.redmineapi.bean.Role;
-import com.taskadapter.redmineapi.bean.SavedQuery;
-import com.taskadapter.redmineapi.bean.Tracker;
-import com.taskadapter.redmineapi.bean.User;
-import com.taskadapter.redmineapi.bean.Version;
-import com.taskadapter.redmineapi.bean.Watcher;
+import com.taskadapter.redmineapi.bean.*;
 import com.taskadapter.redmineapi.internal.RequestParam;
 import com.taskadapter.redmineapi.internal.ResultsWrapper;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.apache.http.client.HttpClient;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static com.taskadapter.redmineapi.CustomFieldResolver.getCustomFieldByName;
 import static com.taskadapter.redmineapi.IssueHelper.createIssue;
 import static com.taskadapter.redmineapi.IssueHelper.createIssues;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class IssueManagerIT {
 
@@ -67,7 +34,7 @@ public class IssueManagerIT {
     private static Transport transport;
     private static User ourUser;
 
-    @BeforeClass
+    @BeforeAll
     public static void oneTimeSetup() throws RedmineException {
         mgr = IntegrationTestHelper.createRedmineManagerWithAPIKey();
         transport = mgr.getTransport();
@@ -98,7 +65,7 @@ public class IssueManagerIT {
         ourUser = IntegrationTestHelper.getOurUser(transport);
     }
 
-    @AfterClass
+    @AfterAll
     public static void oneTimeTearDown() throws RedmineException {
         project.delete();
         project2.delete();
@@ -121,8 +88,11 @@ public class IssueManagerIT {
         Calendar due = Calendar.getInstance();
         due.add(Calendar.MONTH, 1);
 
-        String description = "This is the description for the new task."
-                + "\nIt has several lines." + "\nThis is the last line.";
+        String description = """
+                This is the description for the new task.
+                
+                It has several lines.
+                This is the last line.""";
         float estimatedHours = 44;
 
         Issue newIssue = new Issue(transport, projectId).setSubject("test zzx")
@@ -133,8 +103,8 @@ public class IssueManagerIT {
                 .setEstimatedHours(estimatedHours)
                 .create();
 
-        assertNotNull("Checking returned result", newIssue);
-        assertNotNull("New issue must have some ID", newIssue.getId());
+        assertNotNull(newIssue, "Checking returned result");
+        assertNotNull(newIssue.getId(), "New issue must have some ID");
 
         // check startDate
         Calendar returnedStartCal = Calendar.getInstance();
@@ -182,15 +152,15 @@ public class IssueManagerIT {
                 .setSubject("parent 1")
                 .create();
 
-        assertNotNull("Checking parent was created", parentIssue);
-        assertNotNull("Checking ID of parent issue is not null", parentIssue.getId());
+        assertNotNull( parentIssue, "Checking parent was created");
+        assertNotNull( parentIssue.getId(), "Checking ID of parent issue is not null");
 
         Issue childIssue = new Issue(transport, projectId)
                 .setSubject("child 1")
                 .setParentId(parentIssue.getId())
                 .create();
 
-        assertEquals("Checking parent ID of the child issue", parentIssue.getId(), childIssue.getParentId());
+        assertEquals(parentIssue.getId(), childIssue.getParentId(), "Checking parent ID of the child issue");
     }
 
     /**
@@ -250,11 +220,9 @@ public class IssueManagerIT {
                 "Checking if 'get issue by ID' operation returned issue with same 'subject' field",
                 originalSubject, reloadedFromRedmineIssue.getSubject());
         Tracker tracker = reloadedFromRedmineIssue.getTracker();
-        assertNotNull("Tracker of issue should not be null", tracker);
-        assertNotNull("ID of tracker of issue should not be null",
-                tracker.getId());
-        assertNotNull("Name of tracker of issue should not be null",
-                tracker.getName());
+        assertNotNull(tracker,"Tracker of issue should not be null");
+        assertNotNull(tracker.getId(), "ID of tracker of issue should not be null");
+        assertNotNull(tracker.getName(), "Name of tracker of issue should not be null");
         issue.delete();
     }
 
@@ -264,7 +232,7 @@ public class IssueManagerIT {
         Issue newIssue = new Issue(transport, projectId).setSubject( "testGetIssues: " + new Date())
                 .create();
         List<Issue> issues = issueManager.getIssues(projectKey, null);
-        assertTrue(issues.size() > 0);
+        assertTrue(!issues.isEmpty());
         boolean found = false;
         for (Issue issue : issues) {
             if (issue.getId().equals(newIssue.getId())) {
@@ -278,10 +246,10 @@ public class IssueManagerIT {
         }
     }
 
-    @Test(expected = NotFoundException.class)
-    public void testGetIssuesInvalidQueryId() throws RedmineException {
+    @Test
+    public void testGetIssuesInvalidQueryId() {
         Integer invalidQueryId = 9999999;
-        issueManager.getIssues(projectKey, invalidQueryId);
+        assertThrows(NotFoundException.class, () -> issueManager.getIssues(projectKey, invalidQueryId));
     }
 
     @Test
@@ -296,8 +264,8 @@ public class IssueManagerIT {
     public void testCreateIssueSummaryOnly() throws RedmineException {
         Issue issue = new Issue(transport, projectId).setSubject( "This is the summary line 123")
                 .create();
-        assertNotNull("Checking returned result", issue);
-        assertNotNull("New issue must have some ID", issue.getId());
+        assertNotNull(issue, "Checking returned result");
+        assertNotNull(issue.getId(), "New issue must have some ID");
 
         // check AUTHOR
         Integer EXPECTED_AUTHOR_ID = IntegrationTestHelper.getOurUser(transport).getId();
@@ -329,18 +297,18 @@ public class IssueManagerIT {
         create(new Issue(transport, projectId).setSubject("This is the Issue with duplicate and null params"), param1, param2, param3, param4);
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testCreateIssueWithNullName() throws RedmineException {
+    @Test
+    public void testCreateIssueWithNullName() {
         RequestParam param1 = new RequestParam(null, "param1");
         RequestParam param2 = new RequestParam("name2", "param2");
-        create(new Issue(transport, projectId).setSubject("This is the Issue with null name params"), param1, param2);
+        assertThrows(NullPointerException.class, () -> create(new Issue(transport, projectId).setSubject("This is the Issue with null name params"), param1, param2));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testCreateIssueWithNullValue() throws RedmineException {
+    @Test
+    public void testCreateIssueWithNullValue() {
         RequestParam param1 = new RequestParam("name1", "param1");
         RequestParam param2 = new RequestParam("name2", null);
-        create(new Issue(transport, projectId).setSubject("This is the Issue with null value params"), param1, param2);
+        assertThrows(NullPointerException.class, () -> create(new Issue(transport, projectId).setSubject("This is the Issue with null value params"), param1, param2));
     }
 
     @Test
@@ -350,8 +318,8 @@ public class IssueManagerIT {
 
     private Issue create(Issue issue, RequestParam... params) throws RedmineException {
         Issue responseIssue = issue.create(params);
-        assertNotNull("Checking returned result", responseIssue);
-        assertNotNull("New issue must have some ID", responseIssue.getId());
+        assertNotNull(responseIssue, "Checking returned result");
+        assertNotNull(responseIssue.getId(), "New issue must have some ID");
         return responseIssue;
     }
 
@@ -379,24 +347,24 @@ public class IssueManagerIT {
      * <p>
      * This test is not critical for the release of Redmine Java API library. I am marking it as "ignored" for now.
     */
-    @Ignore
-    @Test(expected = NotFoundException.class)
-    public void creatingIssueWithNonExistingProjectIdGivesNotFoundException() throws RedmineException {
+    @Disabled
+    @Test
+    public void creatingIssueWithNonExistingProjectIdGivesNotFoundException() {
         int nonExistingProjectId = 99999999; // hopefully this does not exist :)
-        new Issue(transport, nonExistingProjectId).setSubject("Summary line 100").create();
+        assertThrows(NotFoundException.class, () -> new Issue(transport, nonExistingProjectId).setSubject("Summary line 100").create());
     }
 
-    @Test(expected = NotFoundException.class)
-    public void retrievingIssueWithNonExistingIdGivesNotFoundException() throws RedmineException {
+    @Test
+    public void retrievingIssueWithNonExistingIdGivesNotFoundException() {
         int someNonExistingID = 999999;
-        issueManager.getIssueById(someNonExistingID);
+        assertThrows(NotFoundException.class, () -> issueManager.getIssueById(someNonExistingID));
     }
 
-    @Test(expected = NotFoundException.class)
-    public void updatingIssueWithNonExistingIdGivesNotFoundException() throws RedmineException {
+    @Test
+    public void updatingIssueWithNonExistingIdGivesNotFoundException() {
         int nonExistingId = 999999;
-        new Issue(transport, projectId).setId(nonExistingId)
-                .update();
+            assertThrows(NotFoundException.class, () -> new Issue(transport, projectId).setId(nonExistingId)
+                    .update());
     }
 
     @Test
@@ -424,14 +392,16 @@ public class IssueManagerIT {
         assertThat(issues.size()).isEqualTo(3);
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testDeleteIssue() throws RedmineException {
         Issue issue = createIssues(transport, projectId, 1).get(0);
         Issue retrievedIssue = issueManager.getIssueById(issue.getId());
         assertEquals(issue, retrievedIssue);
 
-        issue.delete();
-        issueManager.getIssueById(issue.getId());
+        assertThrows(NotFoundException.class, () -> {
+            issue.delete();
+            issueManager.getIssueById(issue.getId());
+        });
     }
 
     @Test
@@ -610,15 +580,13 @@ public class IssueManagerIT {
                 .setAssigneeId(ourUser.getId())
                 .create();
 
-        assertNotNull("Checking returned result", issue);
-        assertNotNull("New issue must have some ID", issue.getId());
+        assertNotNull(issue, "Checking returned result");
+        assertNotNull(issue.getId(), "New issue must have some ID");
 
         List<Issue> foundIssues = issueManager.getIssuesBySummary(projectKey, summary);
 
-        assertNotNull("Checking if search results is not NULL",
-                foundIssues);
-        assertTrue("Search results must be not empty",
-                !(foundIssues.isEmpty()));
+        assertNotNull(foundIssues, "Checking if search results is not NULL" );
+        assertFalse(foundIssues.isEmpty(), "Search results must be not empty");
 
         Issue loadedIssue1 = RedmineTestUtils.findIssueInList(foundIssues,
                 issue.getId());
@@ -631,63 +599,64 @@ public class IssueManagerIT {
     public void findByNonExistingSummaryReturnsEmptyList() throws RedmineException {
         String summary = "some summary here for issue which does not exist";
         List<Issue> foundIssues = issueManager.getIssuesBySummary(projectKey, summary);
-        assertNotNull("Search result must be not null", foundIssues);
-        assertTrue("Search result list must be empty", foundIssues.isEmpty());
+        assertNotNull(foundIssues, "Search result must be not null");
+        assertTrue(foundIssues.isEmpty(), "Search result list must be empty");
     }
 
-    @Test(expected = RedmineAuthenticationException.class)
+    @Test
     public void noAPIKeyOnCreateIssueThrowsAE() throws Exception {
         TestConfig testConfig = new TestConfig();
         HttpClient httpClient = IntegrationTestHelper.getHttpClientForTestServer();
 
-        RedmineManager redmineMgrEmpty = RedmineManagerFactory.createUnauthenticated(testConfig.getURI(),
-                httpClient);
-        new Issue(redmineMgrEmpty.getTransport(), projectId).setSubject( "test zzx")
-                .create();
+        assertThrows(RedmineAuthenticationException.class, () -> {
+            RedmineManager redmineMgrEmpty = RedmineManagerFactory.createUnauthenticated(testConfig.getURI(),
+                    httpClient);
+            new Issue(redmineMgrEmpty.getTransport(), projectId).setSubject("test zzx")
+                    .create();
+        });
     }
 
-    @Test(expected = RedmineAuthenticationException.class)
+    @Test
     public void wrongAPIKeyOnCreateIssueThrowsAE() throws Exception {
         TestConfig testConfig = new TestConfig();
         final HttpClient httpClient = IntegrationTestHelper.getHttpClientForTestServer();
 
-        RedmineManager redmineMgrInvalidKey = RedmineManagerFactory.createWithApiKey(
-                testConfig.getURI(), "wrong_key", httpClient);
-        new Issue(redmineMgrInvalidKey.getTransport(), projectId).setSubject( "test zzx")
-                .create();
+        assertThrows(RedmineAuthenticationException.class, () -> {
+            RedmineManager redmineMgrInvalidKey = RedmineManagerFactory.createWithApiKey(
+                    testConfig.getURI(), "wrong_key", httpClient);
+            new Issue(redmineMgrInvalidKey.getTransport(), projectId).setSubject("test zzx")
+                    .create();
+        });
     }
 
     @Test
     public void testIssueDoneRatio() throws RedmineException {
         Issue createdIssue = new Issue(transport, projectId).setSubject( "Issue " + new Date())
             .create();
-        assertEquals("Initial 'done ratio' must be 0", (Integer) 0,
-                createdIssue.getDoneRatio());
+        assertEquals((Integer) 0, createdIssue.getDoneRatio(), "Initial 'done ratio' must be 0");
         Integer doneRatio = 50;
         createdIssue.setDoneRatio(doneRatio)
                 .update();
 
         Integer issueId = createdIssue.getId();
         Issue reloadedFromRedmineIssue = issueManager.getIssueById(issueId);
-        assertEquals(
-                "Checking if 'update issue' operation changed 'done ratio' field",
-                doneRatio, reloadedFromRedmineIssue.getDoneRatio());
+        assertEquals(doneRatio, reloadedFromRedmineIssue.getDoneRatio(),
+                "Checking if 'update issue' operation changed 'done ratio' field");
 
         Integer invalidDoneRatio = 130;
         try {
             reloadedFromRedmineIssue.setDoneRatio(invalidDoneRatio)
                     .update();
         } catch (RedmineProcessingException e) {
-            assertEquals("Must be 1 error", 1, e.getErrors().size());
+            assertEquals(1, e.getErrors().size(), "Must be 1 error");
             assertEquals("Checking error text",
                     "% Done is not included in the list", e.getErrors()
                             .get(0));
         }
 
         Issue reloadedFromRedmineIssueUnchanged = issueManager.getIssueById(issueId);
-        assertEquals(
-                "'done ratio' must have remained unchanged after invalid value",
-                doneRatio, reloadedFromRedmineIssueUnchanged.getDoneRatio());
+        assertEquals(doneRatio, reloadedFromRedmineIssueUnchanged.getDoneRatio(),
+                "'done ratio' must have remained unchanged after invalid value");
     }
 
     @Test
@@ -780,7 +749,7 @@ public class IssueManagerIT {
 
     @Test
     public void testIssuePriorities() throws RedmineException {
-        assertTrue(issueManager.getIssuePriorities().size() > 0);
+        assertTrue(!issueManager.getIssuePriorities().isEmpty());
     }
 
     @Test
@@ -794,7 +763,7 @@ public class IssueManagerIT {
                 .create();
 
         assertNotNull(createdIssue.getTargetVersion());
-        assertEquals(createdIssue.getTargetVersion().getName(), version1Name);
+        assertEquals(version1Name, createdIssue.getTargetVersion().getName());
 
         Version version2 = createVersion(version2Name);
         createdIssue.setTargetVersion(version2);
@@ -817,12 +786,12 @@ public class IssueManagerIT {
         String originalSubject = "Issue " + new Date();
         Issue issue = new Issue(transport, projectId).setSubject( originalSubject)
                 .create();
-        assertEquals("Estimated hours must be NULL", null, issue.getEstimatedHours());
+        assertNull(issue.getEstimatedHours(), "Estimated hours must be NULL");
 
         issue.update();
 
         Issue reloadedFromRedmineIssue = issueManager.getIssueById(issue.getId());
-        assertEquals("Estimated hours must be NULL", null, reloadedFromRedmineIssue.getEstimatedHours());
+        assertNull(reloadedFromRedmineIssue.getEstimatedHours(), "Estimated hours must be NULL");
     }
 
     /**
@@ -839,13 +808,11 @@ public class IssueManagerIT {
         // TODO we should create some statuses first, but the Redmine Java API
         // does not support this presently
         List<IssueStatus> statuses = issueManager.getStatuses();
-        assertFalse("Expected list of statuses not to be empty",
-                statuses.isEmpty());
+        assertFalse(statuses.isEmpty(), "Expected list of statuses not to be empty");
         for (IssueStatus issueStatus : statuses) {
             // asserts on status
-            assertNotNull("ID of status must not be null", issueStatus.getId());
-            assertNotNull("Name of status must not be null",
-                    issueStatus.getName());
+            assertNotNull(issueStatus.getId(),"ID of status must not be null");
+            assertNotNull(issueStatus.getName(), "Name of status must not be null");
         }
     }
 
@@ -864,9 +831,9 @@ public class IssueManagerIT {
         IssueCategory category = new IssueCategory(transport, project.getId(), "Category" + new Date().getTime())
                 .setAssigneeId(IntegrationTestHelper.getOurUser(transport).getId())
                 .create();
-        assertNotNull("Expected new category not to be null", category);
-        assertNotNull("Expected projectId of new category not to be null", category.getProjectId());
-        assertNotNull("Expected assignee of new category not to be null", category.getAssigneeId());
+        assertNotNull(category, "Expected new category not to be null");
+        assertNotNull(category.getProjectId(), "Expected projectId of new category not to be null");
+        assertNotNull(category.getAssigneeId(), "Expected assignee of new category not to be null");
 
         assertThat(category.getAssigneeId()).isEqualTo(IntegrationTestHelper.getOurUser(transport).getId());
 
@@ -874,9 +841,9 @@ public class IssueManagerIT {
 
         // assert that the category is gone
         List<IssueCategory> categories = issueManager.getCategories(project.getId());
-        assertTrue(
+        assertTrue(categories.isEmpty(),
                 "List of categories of test project must be empty now but is "
-                        + categories, categories.isEmpty());
+                        + categories);
     }
 
     /**
@@ -895,10 +862,10 @@ public class IssueManagerIT {
         IssueCategory category = new IssueCategory(transport, project.getId(), "Category" + new Date().getTime())
                 .setAssigneeId(demoGroup.getId())
                 .create();
-        assertNotNull("Expected new category not to be null", category);
-        assertNotNull("Expected projectId of new category not to be null", category.getProjectId());
-        assertNotNull("Expected assignee of new category not to be null",
-                category.getAssigneeId());
+        assertNotNull(category, "Expected new category not to be null");
+        assertNotNull(category.getProjectId(),"Expected projectId of new category not to be null");
+        assertNotNull(category.getAssigneeId(), "Expected assignee of new category not to be null"
+                );
 
         assertThat(category.getAssigneeId()).isEqualTo(demoGroup.getId());
         assertThat(category.getAssigneeName()).isEqualTo(demoGroup.getName());
@@ -907,9 +874,9 @@ public class IssueManagerIT {
 
         // assert that the category is gone
         List<IssueCategory> categories = issueManager.getCategories(project.getId());
-        assertTrue(
+        assertTrue(categories.isEmpty(),
                 "List of categories of test project must be empty now but is "
-                        + categories, categories.isEmpty());
+                        + categories);
     }
 
     /**
@@ -934,18 +901,15 @@ public class IssueManagerIT {
                 .create();
         try {
             List<IssueCategory> categories = issueManager.getCategories(project.getId());
-            assertEquals("Wrong number of categories for project "
-                            + project.getName() + " delivered by Redmine Java API", 2,
-                    categories.size());
+            assertEquals( 2,
+                    categories.size(), "Wrong number of categories for project "
+                            + project.getName() + " delivered by Redmine Java API");
             for (IssueCategory category : categories) {
                 // assert category
-                assertNotNull("ID of category must not be null",
-                        category.getId());
-                assertNotNull("Name of category must not be null",
-                        category.getName());
-                assertNotNull("ProjectId must not be null", category.getProjectId());
-                assertNotNull("Assignee of category must not be null",
-                        category.getAssigneeId());
+                assertNotNull(category.getId(), "ID of category must not be null");
+                assertNotNull(category.getName(), "Name of category must not be null");
+                assertNotNull(category.getProjectId(), "ProjectId must not be null");
+                assertNotNull(category.getAssigneeId(), "Assignee of category must not be null");
             }
         } finally {
             if (category1 != null) {
@@ -957,21 +921,25 @@ public class IssueManagerIT {
         }
     }
 
-    @Test(expected = NotFoundException.class)
-    public void createIssueCategoryFailsWithInvalidProject() throws RedmineException {
-        new IssueCategory(transport, -1, "InvalidCategory" + new Date().getTime())
-                .create();
+    @Test
+    public void createIssueCategoryFailsWithInvalidProject() {
+        assertThrows(NotFoundException.class, () -> {
+            new IssueCategory(transport, -1, "InvalidCategory" + new Date().getTime())
+                    .create();
+        });
     }
 
     /**
      * tests deletion of an invalid {@link IssueCategory}. Expects a {@link NotFoundException} to be thrown.
      */
-    @Test(expected = NotFoundException.class)
-    public void testDeleteInvalidIssueCategory() throws RedmineException {
+    @Test
+    public void testDeleteInvalidIssueCategory() {
         // create new test category
-        new IssueCategory(transport).setId(-1)
-                .setName("InvalidCategory" + new Date().getTime())
-                .delete();
+        assertThrows(NotFoundException.class, () -> {
+            new IssueCategory(transport).setId(-1)
+                    .setName("InvalidCategory" + new Date().getTime())
+                    .delete();
+        });
     }
 
     /**
@@ -998,14 +966,13 @@ public class IssueManagerIT {
             Issue retrievedIssue = issueManager.getIssueById(newIssue.getId());
             // assert retrieved category of issue
             IssueCategory retrievedCategory = retrievedIssue.getCategory();
-            assertNotNull("Category retrieved for issue " + newIssue.getId()
-                    + " should not be null", retrievedCategory);
-            assertEquals("ID of category retrieved for issue "
-                            + newIssue.getId() + " is wrong", newIssueCategory.getId(),
-                    retrievedCategory.getId());
-            assertEquals("Name of category retrieved for issue "
-                            + newIssue.getId() + " is wrong",
-                    newIssueCategory.getName(), retrievedCategory.getName());
+            assertNotNull(retrievedCategory, "Category retrieved for issue " + newIssue.getId()
+                    + " should not be null");
+            assertEquals(newIssueCategory.getId(),
+                    retrievedCategory.getId(), "ID of category retrieved for issue "
+                            + newIssue.getId() + " is wrong");
+            assertEquals(newIssueCategory.getName(), retrievedCategory.getName(), "Name of category retrieved for issue "
+                    + newIssue.getId() + " is wrong");
 
             retrievedIssue.setCategory(null)
                     .update();
@@ -1166,7 +1133,7 @@ public class IssueManagerIT {
         return getCustomFieldByName(customFieldDefinitions, "custom_multi_list");
     }
 
-    @Ignore
+    @Disabled
     @Test
     public void testChangesets() throws RedmineException {
         final Issue issue = issueManager.getIssueById(89, Include.changesets);
@@ -1185,15 +1152,12 @@ public class IssueManagerIT {
     @Test
     public void testGetTrackers() throws RedmineException {
         List<Tracker> trackers = issueManager.getTrackers();
-        assertNotNull("List of trackers returned should not be null", trackers);
-        assertFalse("List of trackers returned should not be empty",
-                trackers.isEmpty());
+        assertNotNull(trackers,"List of trackers returned should not be null");
+        assertFalse(trackers.isEmpty(), "List of trackers returned should not be empty");
         for (Tracker tracker : trackers) {
-            assertNotNull("Tracker returned should not be null", tracker);
-            assertNotNull("ID of tracker returned should not be null",
-                    tracker.getId());
-            assertNotNull("Name of tracker returned should not be null",
-                    tracker.getName());
+            assertNotNull(tracker, "Tracker returned should not be null");
+            assertNotNull(tracker.getId(), "ID of tracker returned should not be null");
+            assertNotNull(tracker.getName(), "Name of tracker returned should not be null");
         }
     }
 
@@ -1209,11 +1173,11 @@ public class IssueManagerIT {
         issueManager.getSavedQueries(null);
     }
 
-    @Ignore("This test requires a specific project configuration")
+    @Disabled("This test requires a specific project configuration")
     @Test
     public void testSavedQueries() throws RedmineException {
         final Collection<SavedQuery> queries = issueManager.getSavedQueries("test");
-        assertTrue(queries.size() > 0);
+        assertTrue(!queries.isEmpty());
     }
 
     @Test

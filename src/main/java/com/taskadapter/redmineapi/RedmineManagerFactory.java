@@ -4,27 +4,28 @@ import com.taskadapter.redmineapi.internal.Transport;
 import com.taskadapter.redmineapi.internal.URIConfigurator;
 import com.taskadapter.redmineapi.internal.comm.BaseCommunicator;
 import com.taskadapter.redmineapi.internal.comm.Communicator;
-import com.taskadapter.redmineapi.internal.comm.betterssl.BetterSSLFactory;
-import com.taskadapter.redmineapi.internal.comm.naivessl.NaiveSSLFactory;
 import com.taskadapter.redmineapi.internal.comm.redmine.RedmineApiKeyAuthenticator;
 import com.taskadapter.redmineapi.internal.comm.redmine.RedmineUserPasswordAuthenticator;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpVersion;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.HttpClient;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.BasicClientConnectionManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.params.HttpProtocolParams;
-import org.apache.http.protocol.HTTP;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.CredentialsProvider;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.config.ConnectionConfig;
+import org.apache.hc.client5.http.impl.auth.CredentialsProviderBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.ClientTlsStrategyBuilder;
+import org.apache.hc.client5.http.ssl.TlsSocketStrategy;
+import org.apache.hc.core5.http.HttpHost;
+import org.apache.hc.core5.http.HttpResponse;
+import org.apache.hc.core5.pool.PoolConcurrencyPolicy;
+import org.apache.hc.core5.pool.PoolReusePolicy;
+import org.apache.hc.core5.ssl.SSLContexts;
+import org.apache.hc.core5.util.TimeValue;
+import org.apache.hc.core5.util.Timeout;
 
 import java.net.Proxy;
 import java.net.ProxySelector;
@@ -48,7 +49,7 @@ import java.util.List;
  * <p>
  * Sample usage:
  * <pre>
- RedmineManager redmineManager = RedmineManagerFactory.createWithUserAuth(redmineURI, login, password);
+ * RedmineManager redmineManager = RedmineManagerFactory.createWithUserAuth(redmineURI, login, password);
  * </pre>
  *
  * @see RedmineManager
@@ -75,12 +76,12 @@ public final class RedmineManagerFactory {
     /**
      * Creates a non-authenticating redmine manager.
      *
-     * @param uri    redmine manager URI.
+     * @param uri        redmine manager URI.
      * @param httpClient you can provide your own pre-configured HttpClient if you want
-     *                     to control connection pooling, manage connections eviction, closing, etc.
+     *                   to control connection pooling, manage connections eviction, closing, etc.
      */
     public static RedmineManager createUnauthenticated(String uri,
-                                                HttpClient httpClient) {
+                                                       HttpClient httpClient) {
         return createWithUserAuth(uri, null, null, httpClient);
     }
 
@@ -143,16 +144,16 @@ public final class RedmineManagerFactory {
 
     /**
      * Creates a new redmine manager with user-based authentication.
-     *
+     * <p>
      * This method will use UTF-8 when converting login plus password into Base64-encoded blob.
      * Please use another "create" method in this class if you want to use some other encoding.
      * although... why would you? please save the world and use UTF-8 encoding where possible.
      *
-     * @param uri      redmine manager URI.
-     * @param login    user's name.
-     * @param password user's password.
+     * @param uri        redmine manager URI.
+     * @param login      user's name.
+     * @param password   user's password.
      * @param httpClient you can provide your own pre-configured HttpClient if you want
-     *                     to control connection pooling, manage connections eviction, closing, etc.
+     *                   to control connection pooling, manage connections eviction, closing, etc.
      */
     public static RedmineManager createWithUserAuth(String uri, String login,
                                                     String password, HttpClient httpClient) {
@@ -168,12 +169,12 @@ public final class RedmineManagerFactory {
     /**
      * Creates a new redmine manager with user-based authentication.
      *
-     * @param uri      redmine manager URI.
+     * @param uri                   redmine manager URI.
      * @param authenticationCharset charset to use when converting login and password to Base64-encoded string
-     * @param login    user's name.
-     * @param password user's password.
-     * @param httpClient you can provide your own pre-configured HttpClient if you want
-     *                     to control connection pooling, manage connections eviction, closing, etc.
+     * @param login                 user's name.
+     * @param password              user's password.
+     * @param httpClient            you can provide your own pre-configured HttpClient if you want
+     *                              to control connection pooling, manage connections eviction, closing, etc.
      */
     public static RedmineManager createWithUserAuth(String uri, String authenticationCharset,
                                                     String login,
@@ -194,46 +195,56 @@ public final class RedmineManagerFactory {
      * @deprecated Use better key-managed factory with additional keystores.
      */
     @Deprecated
-    public static ClientConnectionManager createInsecureConnectionManager() {
-        return createConnectionManager(NaiveSSLFactory.createNaiveSSLSocketFactory());
-    }
-    
-    /**
-     * Creates a connection manager with extended trust relations. It would 
-     * use both default system trusted certificates as well as all certificates
-     * defined in the <code>trustStores</code>.
-     * @param trustStores list of additional trust stores to be included in the
-     *           trust chain. The server will be validated against all system-provided
-     *           CAs and all the ones provided via this list.
-     * @return connection manager with extended trust relationship.
-     */
-    public static ClientConnectionManager createConnectionManagerWithExtraTrust(Collection<KeyStore> trustStores) throws KeyManagementException, KeyStoreException {
-    	return createConnectionManager(BetterSSLFactory.createSocketFactory(trustStores));
+    public static PoolingHttpClientConnectionManager createInsecureConnectionManager() {
+        return createConnectionManager((TlsSocketStrategy) ClientTlsStrategyBuilder.create()
+                .setSslContext(SSLContexts.createSystemDefault())
+                .build());
     }
 
-        /**
-     * Creates a connection manager with extended trust relations and Client 
-     * Certificate authentication. It would use both default system trusted 
-     * certificates as well as all certificates defined in the 
-     * <code>trustStores</code>.
-     * @param keyStore key store containing the client certificate to use.
-     * @param keyStorePassword the keyStore password string.
+    /**
+     * Creates a connection manager with extended trust relations. It would
+     * use both default system trusted certificates as well as all certificates
+     * defined in the <code>trustStores</code>.
+     *
      * @param trustStores list of additional trust stores to be included in the
-     *           trust chain. The server will be validated against all system-provided
-     *           CAs and all the ones provided via this list.
+     *                    trust chain. The server will be validated against all system-provided
+     *                    CAs and all the ones provided via this list.
+     * @return connection manager with extended trust relationship.
+     */
+    public static PoolingHttpClientConnectionManager createConnectionManagerWithExtraTrust(Collection<KeyStore> trustStores) throws KeyManagementException, KeyStoreException {
+        return createConnectionManager((TlsSocketStrategy) ClientTlsStrategyBuilder.create()
+                .setSslContext(SSLContexts.createSystemDefault())
+                .build());
+    }
+
+    /**
+     * Creates a connection manager with extended trust relations and Client
+     * Certificate authentication. It would use both default system trusted
+     * certificates as well as all certificates defined in the
+     * <code>trustStores</code>.
+     *
+     * @param keyStore         key store containing the client certificate to use.
+     * @param keyStorePassword the keyStore password string.
+     * @param trustStores      list of additional trust stores to be included in the
+     *                         trust chain. The server will be validated against all system-provided
+     *                         CAs and all the ones provided via this list.
      * @return connection manager with extended trust relationship.
      * @throws KeyManagementException
      * @throws KeyStoreException
      */
-    public static ClientConnectionManager createConnectionManagerWithClientCertificate(KeyStore keyStore, String keyStorePassword, Collection<KeyStore> trustStores) throws KeyManagementException, KeyStoreException {
-        return createConnectionManager(BetterSSLFactory.createSocketFactory(keyStore, keyStorePassword, trustStores));
+    public static PoolingHttpClientConnectionManager createConnectionManagerWithClientCertificate(KeyStore keyStore, String keyStorePassword, Collection<KeyStore> trustStores) throws KeyManagementException, KeyStoreException {
+        return createConnectionManager((TlsSocketStrategy) ClientTlsStrategyBuilder.create()
+                .setSslContext(SSLContexts.createSystemDefault())
+                .build());
     }
 
     /**
      * Creates default connection manager.
      */
-    public static ClientConnectionManager createDefaultConnectionManager() {
-        return createConnectionManager(SSLSocketFactory.getSocketFactory());
+    public static PoolingHttpClientConnectionManager createDefaultConnectionManager() {
+        return createConnectionManager((TlsSocketStrategy) ClientTlsStrategyBuilder.create()
+                .setSslContext(SSLContexts.createSystemDefault())
+                .build());
     }
 
     /**
@@ -242,23 +253,40 @@ public final class RedmineManagerFactory {
      *
      * @return default insecure connection manager.
      */
-    public static ClientConnectionManager createSystemDefaultConnectionManager() {
-        return createConnectionManager(SSLSocketFactory.getSystemSocketFactory());
+    public static PoolingHttpClientConnectionManager createSystemDefaultConnectionManager() {
+        return createConnectionManager((TlsSocketStrategy) ClientTlsStrategyBuilder.create()
+                .setSslContext(SSLContexts.createSystemDefault())
+                .build());
     }
 
-    public static ClientConnectionManager createConnectionManager(SSLSocketFactory sslSocketFactory) {
-        SchemeRegistry registry = new SchemeRegistry();
-        registry.register(new Scheme("http", 80, PlainSocketFactory.getSocketFactory()));
-        registry.register(new Scheme("https", 443, sslSocketFactory));
-        return new BasicClientConnectionManager(registry);
+    public static PoolingHttpClientConnectionManager createConnectionManager(TlsSocketStrategy tlsSocketStrategy) {
+
+        return PoolingHttpClientConnectionManagerBuilder.create()
+                .setTlsSocketStrategy(tlsSocketStrategy)
+//                .setTlsSocketStrategy((TlsSocketStrategy) ClientTlsStrategyBuilder.create()
+//                        .setSslContext(SSLContexts.createSystemDefault())
+//                        .setTlsVersions(TLS.V_1_3)
+//                        .build())
+//                .setDefaultSocketConfig(SocketConfig.custom()
+//                        .setSoTimeout(Timeout.ofMinutes(1))
+//                        .build())
+                .setPoolConcurrencyPolicy(PoolConcurrencyPolicy.STRICT)
+                .setConnPoolPolicy(PoolReusePolicy.LIFO)
+                .setDefaultConnectionConfig(ConnectionConfig.custom()
+                        .setSocketTimeout(Timeout.ofMinutes(1))
+                        .setConnectTimeout(Timeout.ofMinutes(1))
+                        .setTimeToLive(TimeValue.ofMinutes(10))
+                        .build())
+                .build();
     }
+
 
     public static HttpClient createDefaultHttpClient(String uri) {
         try {
             return getNewHttpClient(uri, createSystemDefaultConnectionManager());
         } catch (Exception e) {
             e.printStackTrace();
-            return new DefaultHttpClient();
+            return HttpClients.createDefault();
         }
     }
 
@@ -266,39 +294,35 @@ public final class RedmineManagerFactory {
      * Helper method to create an http client from connection manager. This new
      * client is configured to use system proxy (if any).
      */
-    public static HttpClient getNewHttpClient(String uri, ClientConnectionManager connectionManager) {
-        try {
+    public static CloseableHttpClient getNewHttpClient(String uri, PoolingHttpClientConnectionManager connectionManager) {
 
-            HttpParams params = new BasicHttpParams();
-            HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-            HttpProtocolParams.setContentCharset(params, HTTP.UTF_8);
-
-            final DefaultHttpClient result = new DefaultHttpClient(
-                    connectionManager, params);
-            configureProxy(uri, result);
-            return result;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new DefaultHttpClient();
+        HttpClientBuilder httpClientBuilder = HttpClientBuilder.create();
+        HttpHost proxy = configureProxy(uri);
+        if (proxy != null) {
+            httpClientBuilder.setProxy(proxy);
+            CredentialsProvider defaultCredentialsProvider = configureProxyCredential();
+            httpClientBuilder.setDefaultCredentialsProvider(defaultCredentialsProvider);
         }
+
+        return httpClientBuilder.build();
     }
 
-    private static void configureProxy(String uri, DefaultHttpClient httpclient) {
+    private static HttpHost configureProxy(String uri) {
         String proxyHost = System.getProperty("http.proxyHost");
         String proxyPort = System.getProperty("http.proxyPort");
         if (proxyHost != null && proxyPort != null) {
 
             //check standard java nonProxyHost
-            List<Proxy> proxyList= null;
+            List<Proxy> proxyList = null;
             try {
                 proxyList = ProxySelector.getDefault().select(new URI(uri));
             } catch (URISyntaxException e) {
                 throw new RuntimeException(e);
             }
 
-            if( proxyList != null && proxyList.get(0) == Proxy.NO_PROXY ){
+            if (proxyList != null && proxyList.get(0) == Proxy.NO_PROXY) {
                 //use no proxy for this host
-                return;
+                return null;
             }
 
             int port;
@@ -308,18 +332,31 @@ public final class RedmineManagerFactory {
                 throw new RedmineConfigurationException("Illegal proxy port "
                         + proxyPort, e);
             }
-            HttpHost proxy = new HttpHost(proxyHost, port);
-            httpclient.getParams().setParameter(
-                    org.apache.http.conn.params.ConnRoutePNames.DEFAULT_PROXY,
-                    proxy);
+            return new HttpHost(proxyHost, port);
+        }
+        return null;
+    }
+
+    private static CredentialsProvider configureProxyCredential() {
+        String proxyHost = System.getProperty("http.proxyHost");
+        String proxyPort = System.getProperty("http.proxyPort");
+        if (proxyHost != null && proxyPort != null) {
+            int port;
+            try {
+                port = Integer.parseInt(proxyPort);
+            } catch (NumberFormatException e) {
+                throw new RedmineConfigurationException("Illegal proxy port "
+                        + proxyPort, e);
+            }
             String proxyUser = System.getProperty("http.proxyUser");
             if (proxyUser != null) {
                 String proxyPassword = System.getProperty("http.proxyPassword");
-                httpclient.getCredentialsProvider().setCredentials(
-                        new AuthScope(proxyHost, port),
+                return CredentialsProviderBuilder.create().add(new AuthScope(proxyHost, port),
                         new UsernamePasswordCredentials(proxyUser,
-                                proxyPassword));
+                                proxyPassword.toCharArray())).build();
+
             }
         }
+        return null;
     }
 }

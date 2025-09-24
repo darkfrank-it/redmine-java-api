@@ -4,11 +4,11 @@ import com.taskadapter.redmineapi.bean.CustomFieldDefinition;
 import com.taskadapter.redmineapi.internal.RedmineJSONParser;
 import com.taskadapter.redmineapi.internal.json.JsonInput;
 import java.io.IOException;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 import java.util.List;
 import org.json.JSONException;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +26,7 @@ public class CustomFieldDefinitionsIT {
     private static final String CUSTOM_FIELDS_FILE = "custom_fields_redmine_2.3.json";
     private static CustomFieldManager customFieldManager;
 
-    @BeforeClass
+    @BeforeAll
     public static void oneTimeSetup() {
         RedmineManager mgr = IntegrationTestHelper.createRedmineManager();
         customFieldManager = mgr.getCustomFieldManager();

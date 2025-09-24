@@ -4,8 +4,8 @@ import java.io.UnsupportedEncodingException;
 
 import com.taskadapter.redmineapi.internal.comm.Communicator;
 import com.taskadapter.redmineapi.internal.comm.ContentHandler;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.http.HttpRequest;
+import java.util.Base64;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 import com.taskadapter.redmineapi.RedmineException;
 import com.taskadapter.redmineapi.RedmineInternalError;
 
@@ -37,7 +37,7 @@ public class RedmineAuthenticator<K> implements Communicator<K> {
 		}
 		try {
 			authKey = "Basic "
-					+ Base64.encodeBase64String(
+					+ Base64.getEncoder().encodeToString(
 							(login + ':' + password).getBytes(charset)).trim();
 		} catch (UnsupportedEncodingException e) {
 			throw new RedmineInternalError(e);
@@ -45,7 +45,7 @@ public class RedmineAuthenticator<K> implements Communicator<K> {
 	}
 
 	@Override
-	public <R> R sendRequest(HttpRequest request, ContentHandler<K, R> handler)
+	public <R> R sendRequest(ClassicHttpRequest request, ContentHandler<K, R> handler)
 			throws RedmineException {
 		if (authKey != null)
 			request.addHeader("Authorization", authKey);

@@ -1,19 +1,13 @@
 package com.taskadapter.redmineapi.internal.comm.redmine;
 
-import com.taskadapter.redmineapi.NotAuthorizedException;
-import com.taskadapter.redmineapi.NotFoundException;
-import com.taskadapter.redmineapi.RedmineAuthenticationException;
-import com.taskadapter.redmineapi.RedmineException;
-import com.taskadapter.redmineapi.RedmineFormatException;
-import com.taskadapter.redmineapi.RedmineProcessingException;
+import com.taskadapter.redmineapi.*;
 import com.taskadapter.redmineapi.internal.RedmineJSONParser;
 import com.taskadapter.redmineapi.internal.comm.BasicHttpResponse;
 import com.taskadapter.redmineapi.internal.comm.Communicators;
 import com.taskadapter.redmineapi.internal.comm.ContentHandler;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 import org.json.JSONException;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

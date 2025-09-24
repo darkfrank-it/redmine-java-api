@@ -4,10 +4,10 @@ import com.taskadapter.redmineapi.bean.Issue;
 import com.taskadapter.redmineapi.bean.Project;
 import com.taskadapter.redmineapi.bean.TimeEntry;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 
 import java.util.Calendar;
 import java.util.Date;
@@ -18,9 +18,8 @@ import java.util.Map;
 import static com.taskadapter.redmineapi.IssueHelper.createIssue;
 import static com.taskadapter.redmineapi.IssueHelper.createIssues;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class TimeEntryManagerIT {
     // TODO We don't know activities' IDs!
@@ -34,7 +33,7 @@ public class TimeEntryManagerIT {
     private static Transport transport;
     private static Project createdProject;
 
-    @BeforeClass
+    @BeforeAll
     public static void oneTimeSetUp() {
         RedmineManager mgr = IntegrationTestHelper.createRedmineManager();
         transport = mgr.getTransport();
@@ -48,18 +47,18 @@ public class TimeEntryManagerIT {
             projectKey = createdProject.getIdentifier();
             projectId = createdProject.getId();
         } catch (Exception e) {
-            Assert.fail("can't create a test project. " + e.getMessage());
+            fail("can't create a test project. " + e.getMessage());
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void oneTimeTearDown() {
         try {
             if (projectManager != null && projectKey != null) {
                 createdProject.delete();
             }
         } catch (Exception e) {
-            Assert.fail("can't delete the test project '" + projectKey
+            fail("can't delete the test project '" + projectKey
                     + ". reason: " + e.getMessage());
         }
     }
@@ -75,19 +74,19 @@ public class TimeEntryManagerIT {
                     .setIssueId(issue.getId())
                     .create();
             try {
-                Assert.assertNotNull(result.getId());
-                Assert.assertNotNull(result.getIssueId());
-                Assert.assertNotNull(result.getProjectId());
-                Assert.assertNotNull(result.getProjectName());
-                Assert.assertNotNull(result.getUserName());
-                Assert.assertNotNull(result.getUserId());
-                Assert.assertNotNull(result.getActivityName());
-                Assert.assertNotNull(result.getActivityId());
-                Assert.assertEquals(Float.valueOf(123.0f), result.getHours());
-                Assert.assertEquals("", result.getComment());
-                Assert.assertNotNull(result.getSpentOn());
-                Assert.assertNotNull(result.getCreatedOn());
-                Assert.assertNotNull(result.getUpdatedOn());
+                assertNotNull(result.getId());
+                assertNotNull(result.getIssueId());
+                assertNotNull(result.getProjectId());
+                assertNotNull(result.getProjectName());
+                assertNotNull(result.getUserName());
+                assertNotNull(result.getUserId());
+                assertNotNull(result.getActivityName());
+                assertNotNull(result.getActivityId());
+                assertEquals(Float.valueOf(123.0f), result.getHours());
+                assertEquals("", result.getComment());
+                assertNotNull(result.getSpentOn());
+                assertNotNull(result.getCreatedOn());
+                assertNotNull(result.getUpdatedOn());
             } finally {
                 result.delete();
             }
@@ -125,7 +124,7 @@ public class TimeEntryManagerIT {
 
     @Test
     public void testTimeEntryActivities() throws RedmineException {
-        assertTrue(timeEntryManager.getTimeEntryActivities().size() > 0);
+        assertFalse(timeEntryManager.getTimeEntryActivities().isEmpty());
     }
 
     @Test
@@ -158,7 +157,7 @@ public class TimeEntryManagerIT {
         assertEquals(newHours, updatedEntry.getHours());
     }
 
-    @Test(expected = NotFoundException.class)
+    @Test
     public void testCreateDeleteTimeEntry() throws RedmineException {
         Issue issue = createIssues(transport, projectId, 1).get(0);
         Integer issueId = issue.getId();
@@ -172,15 +171,15 @@ public class TimeEntryManagerIT {
         assertNotNull(entry);
 
         entry.delete();
-        timeEntryManager.getTimeEntry(entry.getId());
+        assertThrows(NotFoundException.class, () -> timeEntryManager.getTimeEntry(entry.getId()));
     }
 
     @Test
     public void testGetTimeEntriesForIssue() throws RedmineException {
         Issue issue = createIssues(transport, projectId, 1).get(0);
         Integer issueId = issue.getId();
-        Float hours1 = 2f;
-        Float hours2 = 7f;
+        float hours1 = 2f;
+        float hours2 = 7f;
         Float totalHoursExpected = hours1 + hours2;
         TimeEntry createdEntry1 = createTimeEntry(issueId, hours1);
         TimeEntry createdEntry2 = createTimeEntry(issueId, hours2);
@@ -209,14 +208,14 @@ public class TimeEntryManagerIT {
                 .create();
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void invalidTimeEntryFailsWithIAEOnCreate() throws RedmineException {
-        timeEntryManager.createTimeEntry(createIncompleteTimeEntry());
+    @Test
+    public void invalidTimeEntryFailsWithIAEOnCreate() {
+        assertThrows(IllegalArgumentException.class, () -> timeEntryManager.createTimeEntry(createIncompleteTimeEntry()));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void invalidTimeEntryFailsWithIAEOnUpdate() throws RedmineException {
-        timeEntryManager.update(createIncompleteTimeEntry());
+    @Test
+    public void invalidTimeEntryFailsWithIAEOnUpdate() {
+        assertThrows(IllegalArgumentException.class, () -> timeEntryManager.update(createIncompleteTimeEntry()));
     }
 
     private TimeEntry createIncompleteTimeEntry() {

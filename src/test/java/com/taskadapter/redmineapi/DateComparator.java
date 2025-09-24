@@ -1,10 +1,11 @@
 package com.taskadapter.redmineapi;
 
-import org.junit.Assert;
 
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class DateComparator {
     public static void testLongDate(int year, int month, int day, int hour, int min, int sec, String timeZone, Date expectedDate) {
@@ -16,11 +17,11 @@ public class DateComparator {
         c.set(Calendar.MINUTE, min);
         c.set(Calendar.SECOND, sec);
         c.set(Calendar.MILLISECOND, 0);
-        if (timeZone.length() > 0) {
+        if (!timeZone.isEmpty()) {
             c.setTimeZone(TimeZone.getTimeZone(timeZone));
         }
         Date actualDate = c.getTime();
-        Assert.assertEquals("Checking date", actualDate, expectedDate);
+        assertEquals(actualDate, expectedDate,"Checking date");
     }
 
     public static void testShortDate(int year, int month, int day, Date expectedDate) {

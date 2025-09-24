@@ -1,57 +1,21 @@
 package com.taskadapter.redmineapi.internal;
 
-import com.taskadapter.redmineapi.NotFoundException;
-import com.taskadapter.redmineapi.RedmineAuthenticationException;
-import com.taskadapter.redmineapi.RedmineException;
-import com.taskadapter.redmineapi.RedmineFormatException;
-import com.taskadapter.redmineapi.RedmineInternalError;
-import com.taskadapter.redmineapi.RedmineManager;
-import com.taskadapter.redmineapi.bean.Attachment;
-import com.taskadapter.redmineapi.bean.CustomFieldDefinition;
-import com.taskadapter.redmineapi.bean.File;
-import com.taskadapter.redmineapi.bean.FluentStyle;
-import com.taskadapter.redmineapi.bean.Group;
-import com.taskadapter.redmineapi.bean.Identifiable;
-import com.taskadapter.redmineapi.bean.Issue;
-import com.taskadapter.redmineapi.bean.IssueCategory;
-import com.taskadapter.redmineapi.bean.IssuePriority;
-import com.taskadapter.redmineapi.bean.IssueRelation;
-import com.taskadapter.redmineapi.bean.IssueStatus;
-import com.taskadapter.redmineapi.bean.Membership;
-import com.taskadapter.redmineapi.bean.News;
-import com.taskadapter.redmineapi.bean.Project;
-import com.taskadapter.redmineapi.bean.Role;
-import com.taskadapter.redmineapi.bean.SavedQuery;
-import com.taskadapter.redmineapi.bean.TimeEntry;
-import com.taskadapter.redmineapi.bean.TimeEntryActivity;
-import com.taskadapter.redmineapi.bean.Tracker;
-import com.taskadapter.redmineapi.bean.User;
-import com.taskadapter.redmineapi.bean.Version;
-import com.taskadapter.redmineapi.bean.Watcher;
-import com.taskadapter.redmineapi.bean.WikiPage;
-import com.taskadapter.redmineapi.bean.WikiPageDetail;
-import com.taskadapter.redmineapi.internal.comm.BaseCommunicator;
-import com.taskadapter.redmineapi.internal.comm.BasicHttpResponse;
-import com.taskadapter.redmineapi.internal.comm.Communicator;
-import com.taskadapter.redmineapi.internal.comm.Communicators;
-import com.taskadapter.redmineapi.internal.comm.ContentHandler;
-import com.taskadapter.redmineapi.internal.comm.SimpleCommunicator;
+import com.taskadapter.redmineapi.*;
+import com.taskadapter.redmineapi.bean.*;
+import com.taskadapter.redmineapi.internal.comm.*;
 import com.taskadapter.redmineapi.internal.comm.redmine.RedmineAuthenticator;
 import com.taskadapter.redmineapi.internal.comm.redmine.RedmineErrorHandler;
 import com.taskadapter.redmineapi.internal.json.JsonInput;
 import com.taskadapter.redmineapi.internal.json.JsonObjectParser;
 import com.taskadapter.redmineapi.internal.json.JsonObjectWriter;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.AbstractHttpEntity;
-import org.apache.http.entity.InputStreamEntity;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.classic.HttpClient;
+import org.apache.hc.client5.http.classic.methods.*;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntityContainer;
+import org.apache.hc.core5.http.io.entity.AbstractHttpEntity;
+import org.apache.hc.core5.http.io.entity.InputStreamEntity;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONWriter;
@@ -61,26 +25,21 @@ import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Transport {
 	private static final Map<Class<?>, EntityConfig<?>> OBJECT_CONFIGS = new HashMap<>();
-	private static final String CONTENT_TYPE = "application/json; charset=utf-8";
 	private static final int DEFAULT_OBJECTS_PER_PAGE = 25;
 	private static final String KEY_TOTAL_COUNT = "total_count";
 	private static final String KEY_LIMIT = "limit";
 	private static final String KEY_OFFSET = "offset";
 
-	private final Logger logger = LoggerFactory.getLogger(RedmineManager.class);
+	private final Logger logger = LoggerFactory.getLogger(Transport.class);
 	private SimpleCommunicator<String> communicator;
 	private Communicator<BasicHttpResponse> errorCheckingCommunicator;
-	private Communicator<HttpResponse> authenticator;
+	private Communicator<ClassicHttpResponse> authenticator;
 
     private String onBehalfOfUser = null;
 
@@ -412,9 +371,8 @@ public class Transport {
 	public String upload(InputStream content, long contentLength) throws RedmineException {
 		final URI uploadURI = getURIConfigurator().getUploadURI();
 		final HttpPost request = new HttpPost(uploadURI);
-		final AbstractHttpEntity entity = new InputStreamEntity(content, contentLength);
-		/* Content type required by a Redmine */
-		entity.setContentType("application/octet-stream");
+        /* Content type required by a Redmine */
+        final AbstractHttpEntity entity = new InputStreamEntity(content, contentLength, ContentType.APPLICATION_OCTET_STREAM);
 		request.setEntity(entity);
 
 		final String result = send(request);
@@ -604,7 +562,7 @@ public class Transport {
 		logger.debug(response);
 	}
 
-    private String send(HttpRequestBase http) throws RedmineException {
+    private String send(HttpUriRequestBase http) throws RedmineException {
         if (onBehalfOfUser != null) {
             http.addHeader("X-Redmine-Switch-User", onBehalfOfUser);
         }
@@ -624,19 +582,14 @@ public class Transport {
 		}
 	}
 
-	private static void setEntity(HttpEntityEnclosingRequest request, String body) {
-		setEntity(request, body, CONTENT_TYPE);
-	}
-
-	private static void setEntity(HttpEntityEnclosingRequest request, String body, String contentType) {
+	private static void setEntity(HttpEntityContainer request, String body) {
 		StringEntity entity;
 		try {
-			entity = new StringEntity(body, CHARSET);
+			entity = new StringEntity(body, ContentType.APPLICATION_JSON, StandardCharsets.UTF_8.name(), false);
 		} catch (UnsupportedCharsetException e) {
-			throw new RedmineInternalError("Required charset " + CHARSET
+			throw new RedmineInternalError("Required charset " + StandardCharsets.UTF_8.name()
 					+ " is not supported", e);
 		}
-		entity.setContentType(contentType);
 		request.setEntity(entity);
 	}
 

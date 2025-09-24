@@ -2,10 +2,10 @@ package com.taskadapter.redmineapi;
 
 import com.taskadapter.redmineapi.bean.*;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -14,13 +14,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 
 public class WikiManagerIT {
 
@@ -32,7 +33,7 @@ public class WikiManagerIT {
     private static User currentUser;
     private static Transport transport;
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeClass() throws RedmineException {
         redmineManager = IntegrationTestHelper.createRedmineManager();
         transport = redmineManager.getTransport();
@@ -43,7 +44,7 @@ public class WikiManagerIT {
         currentUser = userManager.getCurrentUser();
     }
 
-    @AfterClass
+    @AfterAll
     public static void oneTimeTearDown() {
         IntegrationTestHelper.deleteProject(transport, project.getIdentifier());
     }
@@ -53,7 +54,7 @@ public class WikiManagerIT {
         WikiPageDetail wikiPageDetail = createSomeWikiPage();
         WikiPageDetail loaded = manager.getWikiPageDetailByProjectAndTitle(projectKey, wikiPageDetail.getTitle());
         String title = wikiPageDetail.getTitle();
-        String urlSafeTitleIsExpected = URLEncoder.encode(title, StandardCharsets.UTF_8.name());
+        String urlSafeTitleIsExpected = URLEncoder.encode(title, StandardCharsets.UTF_8);
         assertThat(loaded.getTitle()).isEqualToIgnoringCase(urlSafeTitleIsExpected);
         assertThat(loaded.getText()).isEqualTo(wikiPageDetail.getText());
         assertThat(loaded.getUser().getId()).isEqualTo(currentUser.getId());
@@ -71,7 +72,7 @@ public class WikiManagerIT {
 
         var loaded = manager.getWikiPageDetailByProjectAndTitle(projectKey, wikiPageDetail.getTitle());
         String title = wikiPageDetail.getTitle();
-        String urlSafeTitleIsExpected = URLEncoder.encode(title, StandardCharsets.UTF_8.name());
+        String urlSafeTitleIsExpected = URLEncoder.encode(title, StandardCharsets.UTF_8);
         assertThat(loaded.getTitle()).isEqualToIgnoringCase(urlSafeTitleIsExpected);
     }
 
@@ -95,13 +96,13 @@ public class WikiManagerIT {
                 .setText("some text here")
                 .setVersion(1)
                 .setCreatedOn(new Date())
-                .setAttachments(Arrays.asList(attachment))
+                .setAttachments(Collections.singletonList(attachment))
                 .setProjectKey(projectKey);
 
         wikiPage.update();
 
         WikiPageDetail actualWikiPage = manager.getWikiPageDetailByProjectAndTitle(projectKey, pageTitle);
-        String urlSafeTitleIsExpected = URLEncoder.encode(wikiPage.getTitle(), StandardCharsets.UTF_8.name());
+        String urlSafeTitleIsExpected = URLEncoder.encode(wikiPage.getTitle(), StandardCharsets.UTF_8);
         assertTrue(urlSafeTitleIsExpected.equalsIgnoreCase(actualWikiPage.getTitle()));
         assertEquals(wikiPage.getText(), actualWikiPage.getText());
         assertEquals(wikiPage.getVersion(), actualWikiPage.getVersion());
@@ -113,7 +114,7 @@ public class WikiManagerIT {
         assertEquals(attachmentPath.toFile().length(), actualAttachment.getFileSize().longValue());
     }
 
-    @Ignore("requires manual configuration, see the source code.")
+    @Disabled("requires manual configuration, see the source code.")
     @Test
     public void getSpecificWikiPageByProject() throws Exception {
         WikiPageDetail specificPage = manager.getWikiPageDetailByProjectAndTitle("test", "Wiki");

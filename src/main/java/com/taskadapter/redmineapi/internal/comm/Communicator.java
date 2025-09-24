@@ -1,7 +1,7 @@
 package com.taskadapter.redmineapi.internal.comm;
 
-import org.apache.http.HttpRequest;
 import com.taskadapter.redmineapi.RedmineException;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 
 public interface Communicator<K> {
 
@@ -10,6 +10,6 @@ public interface Communicator<K> {
 	 * 
 	 * @return the response body.
 	 */
-	<R> R sendRequest(HttpRequest request, ContentHandler<K, R> contentHandler) throws RedmineException;
+	<R> R sendRequest(ClassicHttpRequest request, ContentHandler<K, R> contentHandler) throws RedmineException;
 
 }

@@ -1,7 +1,7 @@
 package com.taskadapter.redmineapi.internal.comm;
 
-import org.apache.http.HttpRequest;
 import com.taskadapter.redmineapi.RedmineException;
+import org.apache.hc.core5.http.ClassicHttpRequest;
 
 /**
  * Basic transport simplifier.
@@ -20,7 +20,7 @@ final class BasicSimplifier<K, T> implements SimpleCommunicator<K> {
 	}
 
 	@Override
-	public K sendRequest(HttpRequest request) throws RedmineException {
+	public K sendRequest(ClassicHttpRequest request) throws RedmineException {
 		return peer.sendRequest(request, contentHandler);
 	}
 

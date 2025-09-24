@@ -1,32 +1,18 @@
 package com.taskadapter.redmineapi;
 
-import com.taskadapter.redmineapi.bean.CustomField;
-import com.taskadapter.redmineapi.bean.CustomFieldDefinition;
-import com.taskadapter.redmineapi.bean.CustomFieldFactory;
-import com.taskadapter.redmineapi.bean.Project;
-import com.taskadapter.redmineapi.bean.Tracker;
-import com.taskadapter.redmineapi.bean.Version;
+import com.taskadapter.redmineapi.bean.*;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import static com.taskadapter.redmineapi.CustomFieldResolver.getCustomFieldByName;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
+
 
 public class ProjectIntegrationIT {
     private static RedmineManager mgr;
@@ -36,7 +22,7 @@ public class ProjectIntegrationIT {
     private static Integer projectId;
     private static Transport transport;
 
-    @BeforeClass
+    @BeforeAll
     public static void oneTimeSetup() {
         mgr = IntegrationTestHelper.createRedmineManager();
         projectManager = mgr.getProjectManager();
@@ -50,14 +36,14 @@ public class ProjectIntegrationIT {
         }
     }
 
-    @AfterClass
+    @AfterAll
     public static void oneTimeTearDown() {
         IntegrationTestHelper.deleteProject(transport, projectKey);
     }
 
-    @Test(expected = NotFoundException.class)
-    public void testDeleteNonExistingProject() throws RedmineException {
-        projectManager.deleteProject("some-non-existing-key");
+    @Test
+    public void testDeleteNonExistingProject() {
+        assertThrows(NotFoundException.class, () -> projectManager.deleteProject("some-non-existing-key"));
     }
 
     @Test
@@ -66,14 +52,18 @@ public class ProjectIntegrationIT {
         assertThat(projectById.getName()).isEqualTo(project.getName());
     }
 
-    @Test(expected = NotFoundException.class)
-    public void requestingPojectNonExistingIdGivesNFE() throws RedmineException {
-        projectManager.getProjectById(999999999);
+    @Test
+    public void requestingPojectNonExistingIdGivesNFE() {
+        assertThrows(NotFoundException.class, () -> {
+            projectManager.getProjectById(999999999);
+        });
     }
 
-    @Test(expected = NotFoundException.class)
-    public void requestingPojectNonExistingStrignKeyGivesNFE() throws RedmineException {
-        projectManager.getProjectByKey("some-non-existing-key");
+    @Test
+    public void requestingPojectNonExistingStrignKeyGivesNFE() {
+        assertThrows(NotFoundException.class, () -> {
+            projectManager.getProjectByKey("some-non-existing-key");
+        });
     }
 
     /**
@@ -91,7 +81,7 @@ public class ProjectIntegrationIT {
         // retrieve projects
         List<Project> projects = projectManager.getProjects();
         // asserts
-        assertTrue(projects.size() > 0);
+        assertFalse(projects.isEmpty());
         boolean found = false;
         for (Project project : projects) {
             if (project.getIdentifier().equals(projectKey)) {
@@ -113,9 +103,8 @@ public class ProjectIntegrationIT {
             Project createdProject = projectToCreate.create();
             key = createdProject.getIdentifier();
 
-            assertNotNull(
-                    "checking that a non-null project is returned",
-                    createdProject);
+            assertNotNull(createdProject,
+                    "checking that a non-null project is returned");
 
             assertEquals(projectToCreate.getIdentifier(),
                     createdProject.getIdentifier());
@@ -129,10 +118,8 @@ public class ProjectIntegrationIT {
             		createdProject.getStatus());
 
             Collection<Tracker> trackers = createdProject.getTrackers();
-            assertNotNull("checking that project has some trackers",
-                    trackers);
-            assertTrue("checking that project has some trackers",
-                    !(trackers.isEmpty()));
+            assertNotNull(trackers, "checking that project has some trackers");
+            assertFalse(trackers.isEmpty(), "checking that project has some trackers");
         } finally {
             if (key != null) {
                 projectManager.deleteProject(key);
@@ -167,10 +154,8 @@ public class ProjectIntegrationIT {
             //status should not change to closed as currently redmine api does not allow reopen/close/archive projects
             assertEquals(statusActive, updatedProject.getStatus());
             Collection<Tracker> trackers = updatedProject.getTrackers();
-            assertNotNull("checking that project has some trackers",
-                    trackers);
-            assertTrue("checking that project has some trackers",
-                    !(trackers.isEmpty()));
+            assertNotNull(trackers, "checking that project has some trackers"                    );
+            assertFalse(trackers.isEmpty(), "checking that project has some trackers");
         } finally {
             if (createdProject != null) {
                 createdProject.delete();
@@ -215,12 +200,12 @@ public class ProjectIntegrationIT {
     }
 
     @Test
-    public void testUpdateTrackersBeforeRedmineUpdate() throws RedmineException {
+    public void testUpdateTrackersBeforeRedmineUpdate() {
         //Trackers are undefined for new project beans, updating trackers on the project object should be allowed
         Project projectToCreate = generateRandomProject();
         assertEquals(0, projectToCreate.getTrackers().size());
         
-        Collection<Tracker> trackers=new HashSet<>(Arrays.asList(new Tracker().setId(1).setName("Bug")));
+        Collection<Tracker> trackers=new HashSet<>(Collections.singletonList(new Tracker().setId(1).setName("Bug")));
         projectToCreate.addTrackers(trackers);
         assertEquals(1, projectToCreate.getTrackers().size());
         
@@ -232,7 +217,7 @@ public class ProjectIntegrationIT {
     public void testUpdateTrackersAfterRedimineUpdate() throws RedmineException {
         //Prerequisite: verify that redmine server has at least 3 trackers (e.g. default configuration)
         List<Tracker> availableTrackers=mgr.getIssueManager().getTrackers();
-        assertTrue("a minumum of 3 trackers should be configured in redmine", availableTrackers.size()>=3);
+        assertTrue(availableTrackers.size()>=3, "a minumum of 3 trackers should be configured in redmine");
 
         Project projectToCreate = generateRandomProject();
         String createdProjectKey = null;
@@ -244,13 +229,13 @@ public class ProjectIntegrationIT {
             assertEquals(0, createdProject.getTrackers().size());
            
             //add single tracker
-            Collection<Tracker> trackersToSet=new HashSet<Tracker>(Arrays.asList(availableTrackers.get(0)));
+            Collection<Tracker> trackersToSet=new HashSet<>(Collections.singletonList(availableTrackers.get(0)));
             createdProject.addTrackers(trackersToSet).update();
             createdProject=projectManager.getProjectByKey(createdProjectKey);
             assertEquals(1, createdProject.getTrackers().size());
 
             //add more than one tracker, it does not replace previous trackers
-            Collection<Tracker> trackersToAdd=new HashSet<Tracker>(Arrays.asList(availableTrackers.get(1), availableTrackers.get(2)));
+            Collection<Tracker> trackersToAdd=new HashSet<>(Arrays.asList(availableTrackers.get(1), availableTrackers.get(2)));
             createdProject.addTrackers(trackersToAdd).update();
             createdProject=projectManager.getProjectByKey(createdProjectKey);
             assertEquals(3, createdProject.getTrackers().size());
@@ -266,19 +251,21 @@ public class ProjectIntegrationIT {
         }
     }
 
-    @Test(expected = NotFoundException.class)
-    public void testUpdateTrackersInvalidGivesException() throws RedmineException {
+    @Test
+    public void testUpdateTrackersInvalidGivesException() {
         int nonExistingTrackerId = 99999999;
-        Collection<Tracker> trackers=new HashSet<>(Arrays.asList(new Tracker().setId(nonExistingTrackerId).setName("NonExisting")));
-        Project projectToCreate = generateRandomProject();
-        projectToCreate.addTrackers(trackers);
-        projectToCreate.create();
+        assertThrows(NotFoundException.class, () -> {
+            Collection<Tracker> trackers=new HashSet<>(Collections.singletonList(new Tracker().setId(nonExistingTrackerId).setName("NonExisting")));
+            Project projectToCreate = generateRandomProject();
+            projectToCreate.addTrackers(trackers);
+            projectToCreate.create();
+        });
     }
 
     @Test
     public void testGetProjectsIncludesTrackers() throws RedmineException {
         List<Project> projects = projectManager.getProjects();
-        assertTrue(projects.size() > 0);
+        assertFalse(projects.isEmpty());
         Project p1 = projects.get(0);
         assertNotNull(p1.getTrackers());
         for (Project p : projects) {
@@ -296,10 +283,9 @@ public class ProjectIntegrationIT {
         List<Project> projects = createProjects(NUM);
 
         List<Project> loadedProjects = projectManager.getProjects();
-        assertTrue(
+        assertTrue(loadedProjects.size() > NUM,
                 "Number of projects loaded from the server must be bigger than "
-                        + NUM + ", but it's " + loadedProjects.size(),
-                loadedProjects.size() > NUM);
+                        + NUM + ", but it's " + loadedProjects.size());
 
         deleteProjects(projects);
     }
@@ -321,7 +307,7 @@ public class ProjectIntegrationIT {
     }
 
     private static Project generateRandomProject() {
-        Long timeStamp = Calendar.getInstance().getTimeInMillis();
+        long timeStamp = Calendar.getInstance().getTimeInMillis();
         String key = "projkey" + timeStamp;
         String name = "project number " + timeStamp;
         String description = "some description for the project";
@@ -348,8 +334,7 @@ public class ProjectIntegrationIT {
         try {
             createdMainProject = createProject();
             Project subProject = createSubProject(createdMainProject);
-            assertEquals("Must have correct parent ID",
-                    createdMainProject.getId(), subProject.getParentId());
+            assertEquals(createdMainProject.getId(), subProject.getParentId(), "Must have correct parent ID"               );
         } finally {
             if (createdMainProject != null) {
                 createdMainProject.delete();
@@ -362,7 +347,7 @@ public class ProjectIntegrationIT {
      * cannot create custom fields in Redmine programmatically - no support in its REST API.
      * See feature request http://www.redmine.org/issues/9664
      */
-    @Ignore
+    @Disabled
     @Test
     public void projectIsCreatedWithCustomField() throws RedmineException {
         List<CustomFieldDefinition> customFieldDefinitions = mgr.getCustomFieldManager().getCustomFieldDefinitions();
@@ -374,7 +359,7 @@ public class ProjectIntegrationIT {
         project.setName("project-with-custom-field");
         Project createdProject = null;
         try {
-            project.addCustomFields(Arrays.asList(customField));
+            project.addCustomFields(List.of(customField));
             createdProject = projectManager.createProject(project);
             assertThat(createdProject.getCustomFieldById(fieldId).getValue()).isEqualTo("value1");
         } finally {
@@ -395,7 +380,7 @@ public class ProjectIntegrationIT {
     public void testDeleteVersion() throws RedmineException {
         Project project = createProject();
         try {
-            String name = "Test version " + UUID.randomUUID().toString();
+            String name = "Test version " + UUID.randomUUID();
             Version version = new Version(transport, project.getId(), name)
                     .setDescription("A test version created by " + this.getClass())
                     .setStatus("open")
@@ -404,8 +389,8 @@ public class ProjectIntegrationIT {
 
             version.delete();
             List<Version> versions = projectManager.getVersions(project.getId());
-            assertTrue("List of versions of test project must be empty now but is "
-                    + versions, versions.isEmpty());
+            assertTrue(versions.isEmpty(), "List of versions of test project must be empty now but is "
+                    + versions);
         } finally {
             project.delete();
         }
@@ -425,14 +410,14 @@ public class ProjectIntegrationIT {
             testVersion2 = new Version(transport, project.getId(), "Version" + UUID.randomUUID())
                     .create();
             List<Version> versions = projectManager.getVersions(project.getId());
-            assertEquals("Wrong number of versions for project "
-                            + project.getName() + " delivered by Redmine Java API", 2,
-                    versions.size());
+            assertEquals(2,
+                    versions.size(), "Wrong number of versions for project "
+                            + project.getName() + " delivered by Redmine Java API");
             for (Version version : versions) {
                 // assert version
-                assertNotNull("ID of version must not be null", version.getId());
-                assertNotNull("Name of version must not be null", version.getName());
-                assertNotNull("ProjectId of version must not be null", version.getProjectId());
+                assertNotNull(version.getId(), "ID of version must not be null");
+                assertNotNull(version.getName(), "Name of version must not be null");
+                assertNotNull(version.getProjectId(), "ProjectId of version must not be null");
             }
         } finally {
             if (testVersion1 != null) {
@@ -506,24 +491,26 @@ public class ProjectIntegrationIT {
                 .create();
     }
 
-    @Test(expected = NotFoundException.class)
-    public void versionWithNonExistingProjectIdGivesNotFoundException() throws RedmineException {
-        new Version(transport, -1, "Invalid version " + UUID.randomUUID().toString())
-                .create();
+    @Test
+    public void versionWithNonExistingProjectIdGivesNotFoundException() {
+        assertThrows(NotFoundException.class, () -> new Version(transport, -1, "Invalid version " + UUID.randomUUID())
+                .create());
     }
 
     /**
      * tests the deletion of an invalid {@link Version}. Expects a
      * {@link NotFoundException} to be thrown.
      */
-    @Test(expected = NotFoundException.class)
-    public void testDeleteInvalidVersion() throws RedmineException {
-        // version with invalid id: -1.
-        Version version = new Version(transport, projectId, "123").setId(-1)
-                .setName("name invalid version " + UUID.randomUUID().toString())
-                .setDescription("An invalid test version created by " + this.getClass());
+    @Test
+    public void testDeleteInvalidVersion() {
+        assertThrows(NotFoundException.class, () -> {
+            // version with invalid id: -1.
+            Version version = new Version(transport, projectId, "123").setId(-1)
+                    .setName("name invalid version " + UUID.randomUUID())
+                    .setDescription("An invalid test version created by " + this.getClass());
 
-        version.delete();
+            version.delete();
+        });
     }
 
     @Test

@@ -1,19 +1,21 @@
 package com.taskadapter.redmineapi;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RedmineManagerFactoryTest {
 
     @SuppressWarnings("unused")
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testNULLHostParameter() {
-        RedmineManagerFactory.createUnauthenticated(null);
+        assertThrows(IllegalArgumentException.class, () -> RedmineManagerFactory.createUnauthenticated(null));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     @SuppressWarnings("unused")
     public void testEmptyHostParameter() throws RuntimeException {
-        RedmineManagerFactory.createUnauthenticated("");
+        assertThrows(IllegalArgumentException.class, () -> RedmineManagerFactory.createUnauthenticated(""));
     }
 
 }

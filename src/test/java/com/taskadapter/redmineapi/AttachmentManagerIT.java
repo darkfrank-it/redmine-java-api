@@ -4,11 +4,12 @@ import com.taskadapter.redmineapi.bean.Attachment;
 import com.taskadapter.redmineapi.bean.Issue;
 import com.taskadapter.redmineapi.bean.Project;
 import com.taskadapter.redmineapi.internal.Transport;
-import org.apache.http.entity.ContentType;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.apache.hc.core5.http.ContentType;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
 
 import java.io.File;
 import java.io.FileWriter;
@@ -18,9 +19,7 @@ import java.util.Collection;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class AttachmentManagerIT {
 
@@ -30,7 +29,7 @@ public class AttachmentManagerIT {
     private static AttachmentManager attachmentManager;
     private static Transport transport;
 
-    @BeforeClass
+    @BeforeAll
     public static void oneTimeSetup() {
         RedmineManager mgr = IntegrationTestHelper.createRedmineManager();
         transport = mgr.getTransport();
@@ -42,7 +41,7 @@ public class AttachmentManagerIT {
         projectKey = project.getIdentifier();
     }
 
-    @AfterClass
+    @AfterAll
     public static void oneTimeTearDown() {
         IntegrationTestHelper.deleteProject(transport, projectKey);
     }
@@ -113,15 +112,18 @@ public class AttachmentManagerIT {
         }
     }
 
-    @Test(expected = IOException.class)
-    public void testUploadException() throws RedmineException, IOException {
-        final InputStream content = new InputStream() {
+    @Test
+    public void testUploadException() throws IOException {
+        try (InputStream content = new InputStream() {
             @Override
             public int read() throws IOException {
                 throw new IOException("Unsupported read!");
             }
-        };
-        attachmentManager.uploadAttachment("test.bin", "application/ternary", content);
+        }) {
+            assertThrows(IOException.class, () -> {
+                attachmentManager.uploadAttachment("test.bin", "application/ternary", content);
+            });
+        }
     }
 
     /**
@@ -134,7 +136,7 @@ public class AttachmentManagerIT {
      * @throws NotFoundException              thrown in case the objects requested for could not be found
      */
     // TODO reactivate once Redmine REST API allows for creating attachments
-    @Ignore
+    @Disabled
     @Test
     public void testGetAttachmentById() throws RedmineException {
         // TODO where do we get a valid attachment number from? We can't create
@@ -142,11 +144,10 @@ public class AttachmentManagerIT {
         // not support that.
         int attachmentID = 1;
         Attachment attachment = attachmentManager.getAttachmentById(attachmentID);
-        assertNotNull("Attachment retrieved by ID " + attachmentID
-                + " should not be null", attachment);
-        assertNotNull("Content URL of attachment retrieved by ID "
-                + attachmentID + " should not be null",
-                attachment.getContentURL());
+        assertNotNull(attachment, "Attachment retrieved by ID " + attachmentID
+                + " should not be null");
+        assertNotNull(attachment.getContentURL(), "Content URL of attachment retrieved by ID "
+                + attachmentID + " should not be null");
         // TODO more asserts on the attachment once this delivers an attachment
     }
 
@@ -161,7 +162,7 @@ public class AttachmentManagerIT {
      * @throws NotFoundException              thrown in case the objects requested for could not be found
      */
     // TODO reactivate once Redmine REST API allows for creating attachments
-    @Ignore
+    @Disabled
     @Test
     public void testDownloadAttachmentContent() throws RedmineException {
         // TODO where do we get a valid attachment number from? We can't create
@@ -172,8 +173,8 @@ public class AttachmentManagerIT {
         Attachment attachment = attachmentManager.getAttachmentById(attachmentID);
         // download attachment content
         byte[] attachmentContent = attachmentManager.downloadAttachmentContent(attachment);
-        assertNotNull("Download of content of attachment with content URL " + attachment.getContentURL()
-                + " should not be null", attachmentContent);
+        assertNotNull(attachmentContent,"Download of content of attachment with content URL " + attachment.getContentURL()
+                + " should not be null");
     }
 
     /**
@@ -187,7 +188,7 @@ public class AttachmentManagerIT {
      * @throws NotFoundException              thrown in case the objects requested for could not be found
      */
     // TODO reactivate once Redmine REST API allows for creating attachments
-    @Ignore
+    @Disabled
     @Test
     public void testDownloadAttachmentContentWithAPIKey() throws RedmineException {
         // TODO where do we get a valid attachment number from? We can't create
@@ -201,8 +202,8 @@ public class AttachmentManagerIT {
         Attachment attachment = attachmentMgr.getAttachmentById(attachmentID);
         // download attachment content
         byte[] attachmentContent = attachmentMgr.downloadAttachmentContent(attachment);
-        assertNotNull("Download of content of attachment with content URL " + attachment.getContentURL()
-                + " should not be null", attachmentContent);
+        assertNotNull(attachmentContent, "Download of content of attachment with content URL " + attachment.getContentURL()
+                + " should not be null");
         // TODO perform downloaded content validation (when we'll be able to create
         // an attachment using Redmine REST API)
     }
@@ -231,10 +232,9 @@ public class AttachmentManagerIT {
             // retrieve issue attachments
             Issue retrievedIssue = issueManager.getIssueById(newIssue.getId(),
                     Include.attachments);
-            assertNotNull("List of attachments retrieved for issue "
+            assertNotNull(retrievedIssue.getAttachments(), "List of attachments retrieved for issue "
                     + newIssue.getId()
-                    + " delivered by Redmine Java API should not be null",
-                    retrievedIssue.getAttachments());
+                    + " delivered by Redmine Java API should not be null");
             // TODO assert attachments once we actually receive ones for our
             // test issue
         } finally {
